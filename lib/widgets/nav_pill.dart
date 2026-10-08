@@ -37,74 +37,65 @@ class NavPill extends StatelessWidget {
         ),
     ];
     // Le sélecteur de mois n'a aucun sens sur une vue qui les ignore.
-    final month = store.viewMode == ViewMode.board
-        ? _MonthPicker(store: store)
+    // Au téléphone il part dans l'en-tête : la rangée unique n'a pas la place.
+    final month = store.viewMode == ViewMode.board && !phone
+        ? MonthPicker(store: store)
         : null;
 
-    return Center(
-      child: InkOutline(
-        radius: T.rNav,
-        color: T.surface,
-        shadow: T.navShadow,
-        padding: const EdgeInsets.all(7),
-        // Sur téléphone, deux rangées décidées plutôt qu'un `Wrap` subi : à
-        // 400 px de large, le repli automatique sortait « Liste » seule à
-        // droite et « Votes » orpheline au-dessus du bouton.
-        child: phone
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      logo,
-                      const SizedBox(width: 6),
-                      Flexible(child: ProjectMenu(store: store)),
-                      const SizedBox(width: 6),
-                      // Icône seule : le libellé coûtait une rangée entière.
-                      PillButton(
-                        label: '+',
-                        onPressed: onCreate,
-                        semanticLabel: 'Nouvelle demande',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Un `Wrap` ici, mais sur un contenu homogène : à 320 px le
-                  // sélecteur de mois descend sous les onglets, et c'est
-                  // toujours lisible. Le `Wrap` d'origine mélangeait logo,
-                  // projet, onglets et bouton, d'où le résultat bancal.
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      ...tabs,
-                      // « Votes » est inerte (handoff §4) : au téléphone elle
-                      // coûterait de la largeur pour rien.
-                      ?month,
-                    ],
-                  ),
+    final bar = InkOutline(
+      radius: T.rNav,
+      color: T.surface,
+      shadow: T.navShadow,
+      padding: const EdgeInsets.all(7),
+      // Sur téléphone, deux rangées décidées plutôt qu'un `Wrap` subi : à
+      // 400 px de large, le repli automatique sortait « Liste » seule à
+      // droite et « Votes » orpheline au-dessus du bouton.
+      // Une seule rangée au téléphone, centrée. Le logo n'y est pas : il
+      // est décoratif, et la pilule de projet porte déjà le contexte. La
+      // rangée prend toute la largeur — sans ça (`MainAxisSize.min`) le
+      // `Flexible` du projet n'a aucune place à céder et la barre déborde.
+      child: phone
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(child: ProjectMenu(store: store)),
+                // Les onglets aussi cèdent : à très grande échelle de
+                // police système, « Table… » vaut mieux que des rayures jaune
+                // et noir. Rien dans cette rangée ne peut plus déborder.
+                for (final tab in tabs) ...[
+                  const SizedBox(width: 6),
+                  Flexible(child: tab),
                 ],
-              )
-            : Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  logo,
-                  ProjectMenu(store: store),
-                  ...tabs,
-                  // La vue Votes reste inerte : hors périmètre (handoff §4).
-                  const _NavChip(label: 'Votes', active: false),
-                  ?month,
-                  PillButton(label: '+ Demande', onPressed: onCreate),
-                ],
-              ),
-      ),
+                const SizedBox(width: 6),
+                // Icône seule : le libellé prenait la place d'un onglet.
+                PillButton(
+                  label: '+',
+                  onPressed: onCreate,
+                  semanticLabel: 'Nouvelle demande',
+                  horizontalPadding: 12,
+                ),
+              ],
+            )
+          : Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                logo,
+                ProjectMenu(store: store),
+                ...tabs,
+                // La vue Votes reste inerte : hors périmètre (handoff §4).
+                const _NavChip(label: 'Votes', active: false),
+                ?month,
+                PillButton(label: '+ Demande', onPressed: onCreate),
+              ],
+            ),
     );
+
+    // Au bureau la pilule se centre et garde sa largeur naturelle ; au
+    // téléphone elle occupe la ligne, et c'est son contenu qui se centre.
+    return phone ? bar : Center(child: bar);
   }
 }
 
@@ -121,7 +112,10 @@ class _NavChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final body = Container(
       height: 42,
-      padding: EdgeInsets.symmetric(horizontal: active ? 14 : 12),
+      padding: EdgeInsets.symmetric(
+        // Au téléphone chaque pixel de marge se paie sur la ligne unique.
+        horizontal: isPhone(context) ? 9 : (active ? 14 : 12),
+      ),
       decoration: BoxDecoration(
         color: active ? T.accentSoft : null,
         borderRadius: BorderRadius.circular(T.rNavItem),
@@ -129,11 +123,17 @@ class _NavChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: active
-                ? TextStyles.bold800.copyWith(color: T.accentInk)
-                : TextStyles.body.copyWith(color: T.muted),
+          // Abrégeable : à très grande échelle de police système, « Table… »
+          // vaut mieux que des rayures jaune et noir.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: active
+                  ? TextStyles.bold800.copyWith(color: T.accentInk)
+                  : TextStyles.body.copyWith(color: T.muted),
+            ),
           ),
         ],
       ),
@@ -155,8 +155,11 @@ class _NavChip extends StatelessWidget {
 
 /// Navigation de mois libre dans les deux sens, contrairement au prototype qui
 /// bornait à trois mois : une demande peut naître n'importe quel mois.
-class _MonthPicker extends StatelessWidget {
-  const _MonthPicker({required this.store});
+/// Le sélecteur de mois. Dans la pilule de navigation au bureau ; au
+/// téléphone il descend dans l'en-tête, faute de largeur — et il y est de
+/// toute façon plus à sa place, le sous-titre dit déjà « en octobre ».
+class MonthPicker extends StatelessWidget {
+  const MonthPicker({super.key, required this.store});
 
   final ArdoiseStore store;
 

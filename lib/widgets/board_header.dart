@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'avatar.dart';
 import 'dashed.dart';
+import 'nav_pill.dart';
 import 'primitives.dart';
 
 /// Titre, sous-titre, segment de choix, puces de type, et la barre des
@@ -71,6 +72,9 @@ class BoardHeader extends StatelessWidget {
                 onSelect: store.setGrouping,
               ),
             _TypeChips(store: store),
+            // Chassé de la pilule de navigation faute de largeur.
+            if (isPhone(context) && store.viewMode == ViewMode.board)
+              MonthPicker(store: store),
           ],
         ),
         if (!list && store.grouping != BoardGrouping.status) ...[

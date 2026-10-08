@@ -58,11 +58,11 @@ class _Drawer extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      // Pleine hauteur comme `top:16; bottom:16` du prototype ; le contenu
-      // défile à l'intérieur.
+      // Le tiroir se cale sur son contenu et ne s'étire que s'il déborde :
+      // forcé en pleine hauteur, il laissait un grand vide sous le pied sur
+      // les demandes courtes. Le défilement interne prend le relais au-delà.
       child: SizedBox(
         width: T.drawerWidth,
-        height: double.infinity,
         // Un panneau de dialogue n'a pas de `Material` ancêtre : les `InkWell`
         // en réclament un.
         child: Material(

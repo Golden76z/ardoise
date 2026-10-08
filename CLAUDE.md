@@ -94,7 +94,15 @@ flutter run -d chrome
 
 Un seul point de rupture : `T.phoneBreakpoint` (600 px), lu par
 `isPhone(context)`. Il ne gouverne que **l'habillage de la page** — barre de
-navigation, titre, marges, segment, lignes de liste. Les panneaux (tiroir,
+navigation, titre, marges, segment, lignes de liste.
+
+Au téléphone la barre de navigation tient **sur une ligne**, contenu centré,
+et prend toute la largeur : c'est ce qui donne au `Flexible` de la pilule de
+projet une place à céder. Dans un `Row(mainAxisSize: .min)`, un `Flexible` ne
+rétrécit jamais — la rangée se dimensionne sur ses enfants. Le prix de la
+ligne unique : le logo (décoratif) disparaît, et le sélecteur de mois descend
+dans l'en-tête. Tout ce qui porte du texte dans cette rangée est `Flexible` +
+ellipsis, pour que rien ne déborde quelle que soit l'échelle de police. Les panneaux (tiroir,
 dialogue de création, menu de projet) se replient déjà correctement d'eux-mêmes
 et n'ont pas de branche téléphone. `test/responsive_test.dart` monte l'app de
 280 à 1440 px.

@@ -6,6 +6,7 @@ import 'package:ardoise/models/models.dart';
 import 'package:ardoise/theme/app_theme.dart';
 import 'package:ardoise/theme/tokens.dart';
 import 'package:ardoise/widgets/list_view.dart';
+import 'package:ardoise/widgets/nav_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -52,7 +53,7 @@ void main() {
     }
   });
 
-  testWidgets('au téléphone, la navigation tient en deux rangées décidées', (
+  testWidgets('au téléphone, la navigation tient sur une ligne', (
     tester,
   ) async {
     await _pumpAt(tester, 412);
@@ -61,6 +62,28 @@ void main() {
     // Le bouton de création perd son libellé mais garde son nom accessible.
     expect(find.text('+ Demande'), findsNothing);
     expect(find.bySemanticsLabel(RegExp('Nouvelle demande')), findsOneWidget);
+    // Une seule rangée : le logo décoratif part, et le sélecteur de mois
+    // descend dans l'en-tête — c'est le prix de la ligne unique.
+    expect(find.text('A'), findsNothing, reason: 'logo décoratif au téléphone');
+    expect(
+      find.descendant(
+        of: find.byType(NavPill),
+        matching: find.byType(MonthPicker),
+      ),
+      findsNothing,
+    );
+    expect(find.byType(MonthPicker), findsOneWidget, reason: 'dans l’en-tête');
+    // Les éléments de la nav tiennent sur une seule ligne.
+    final navItems = <Finder>[
+      find.descendant(of: find.byType(NavPill), matching: find.text('Échéo ▾')),
+      find.descendant(of: find.byType(NavPill), matching: find.text('Tableau')),
+      find.descendant(of: find.byType(NavPill), matching: find.text('Liste')),
+    ];
+    final centres = navItems.map((f) => tester.getCenter(f).dy).toList();
+    for (final c in centres) {
+      expect(c, closeTo(centres.first, 2), reason: 'tous sur la même ligne');
+    }
+
     // Le libellé du segment disparaît, pas ses options.
     expect(find.text('Colonnes'), findsNothing);
     for (final g in BoardGrouping.values) {

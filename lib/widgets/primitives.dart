@@ -83,6 +83,7 @@ class PillButton extends StatelessWidget {
     this.style = PillStyle.primary,
     this.height = 42,
     this.semanticLabel,
+    this.horizontalPadding = 18,
   });
 
   final String label;
@@ -91,6 +92,10 @@ class PillButton extends StatelessWidget {
   final double height;
   final String? semanticLabel;
 
+  /// Resserré quand le libellé est un seul glyphe, où 18 px de part et
+  /// d'autre coûtent plus que le texte lui-même.
+  final double horizontalPadding;
+
   @override
   Widget build(BuildContext context) {
     final primary = style == PillStyle.primary;
@@ -98,7 +103,7 @@ class PillButton extends StatelessWidget {
       radius: height / 2,
       color: primary ? T.accent : T.surface,
       borderColor: primary ? T.ink : T.line,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       // Pas d'`Align` ni de `Center` : sous les contraintes lâches d'un `Wrap`
       // ils s'étirent à toute la largeur disponible.
       child: Row(
