@@ -201,8 +201,8 @@ class Request {
 
 /// Ce que la persistance échange en un bloc : les projets et leurs demandes.
 /// Les deux voyagent ensemble — une demande sans son projet n'a pas de sens.
-class ChantierSnapshot {
-  const ChantierSnapshot({required this.projects, required this.requests});
+class ArdoiseSnapshot {
+  const ArdoiseSnapshot({required this.projects, required this.requests});
 
   final List<Project> projects;
   final List<Request> requests;
@@ -213,8 +213,8 @@ class ChantierSnapshot {
   };
 
   /// Lève sur un document mal formé ; `PrefsRepository` rattrape.
-  factory ChantierSnapshot.fromJson(Map<String, Object?> json) =>
-      ChantierSnapshot(
+  factory ArdoiseSnapshot.fromJson(Map<String, Object?> json) =>
+      ArdoiseSnapshot(
         projects: (json['projects']! as List)
             .cast<Map<String, Object?>>()
             .map(Project.fromJson)

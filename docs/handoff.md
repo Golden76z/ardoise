@@ -1,4 +1,4 @@
-# Chantier — dossier de passation
+# Ardoise — dossier de passation
 
 Petite appli de gestion de projet, réutilisable sur plusieurs projets, centrée sur les **demandes** (bugs, fonctionnalités, idées), les personnes qui les **demandent** et celles qui les **traitent**.
 
@@ -145,6 +145,6 @@ Ambiance : douce et chaleureuse, palette pêche / terracotta, contours fins brun
 
 ## 6. Prompt de départ pour Claude Code
 
-> Lis `README.md`, `design-tokens.json` et ouvre `prototype.html` : c'est la référence visuelle et fonctionnelle de l'appli « Chantier ».
+> Lis `README.md`, `design-tokens.json` et ouvre `prototype.html` : c'est la référence visuelle et fonctionnelle de l'appli « Ardoise ».
 > Avant de coder, propose-moi une stack (en tenant compte de la section 5), une arborescence de projet et un plan d'implémentation par étapes pour la V1 décrite en section 1, avec le modèle de données de la section 2.
 > Reproduis fidèlement le design (section 3 et tokens). Commence par le modèle de données et l'API, puis la vue Tableau avec le choix des colonnes (Statut / Intervenant / Demandeur), le filtre par mois, les filtres par type, le panneau de détail, la création de demande et les votes.

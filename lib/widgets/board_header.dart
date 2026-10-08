@@ -14,7 +14,7 @@ import 'primitives.dart';
 class BoardHeader extends StatelessWidget {
   const BoardHeader({super.key, required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   /// Le sous-titre du tableau parle du mois affiché : il mentirait en liste.
   String get _listSubtitle {
@@ -162,7 +162,7 @@ class _SegButton extends StatelessWidget {
 class _TypeChips extends StatelessWidget {
   const _TypeChips({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -244,7 +244,7 @@ class _TypeChip extends StatelessWidget {
 class _PeopleBar extends StatelessWidget {
   const _PeopleBar({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => DashedBorder(

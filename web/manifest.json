@@ -1,6 +1,6 @@
 {
-    "name": "chantier",
-    "short_name": "chantier",
+    "name": "ardoise",
+    "short_name": "ardoise",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

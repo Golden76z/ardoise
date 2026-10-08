@@ -6,23 +6,23 @@ import 'data/store.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  final store = ChantierStore(repository: PrefsRepository());
+  final store = ArdoiseStore(repository: PrefsRepository());
   // Le chargement est asynchrone ; `BoardPage` affiche un indicateur tant que
   // `store.loading` est vrai.
   store.init();
-  runApp(ChantierApp(store: store));
+  runApp(ArdoiseApp(store: store));
 }
 
-class ChantierApp extends StatelessWidget {
-  const ChantierApp({super.key, required this.store});
+class ArdoiseApp extends StatelessWidget {
+  const ArdoiseApp({super.key, required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Chantier',
+    title: 'Ardoise',
     debugShowCheckedModeBanner: false,
-    theme: buildChantierTheme(),
+    theme: buildArdoiseTheme(),
     home: BoardPage(store: store),
   );
 }

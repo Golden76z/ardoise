@@ -12,7 +12,7 @@ import 'project_menu.dart';
 class NavPill extends StatelessWidget {
   const NavPill({super.key, required this.store, required this.onCreate});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final VoidCallback onCreate;
 
   @override
@@ -109,7 +109,7 @@ class _NavChip extends StatelessWidget {
 class _MonthPicker extends StatelessWidget {
   const _MonthPicker({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => Container(

@@ -1,5 +1,5 @@
-import 'package:chantier/data/seed.dart';
-import 'package:chantier/models/models.dart';
+import 'package:ardoise/data/seed.dart';
+import 'package:ardoise/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Request _sample({
@@ -77,11 +77,11 @@ void main() {
   });
 
   test('aller-retour JSON de l’instantané', () {
-    final before = ChantierSnapshot(
+    final before = ArdoiseSnapshot(
       projects: seedProjects,
       requests: seedRequests,
     );
-    final after = ChantierSnapshot.fromJson(before.toJson());
+    final after = ArdoiseSnapshot.fromJson(before.toJson());
     expect(after.projects.map((p) => p.id), before.projects.map((p) => p.id));
     expect(after.projects.first.color, before.projects.first.color);
     expect(

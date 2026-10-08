@@ -1,16 +1,16 @@
-import 'package:chantier/models/models.dart';
-import 'package:chantier/theme/app_theme.dart';
-import 'package:chantier/theme/tokens.dart';
-import 'package:chantier/widgets/avatar.dart';
-import 'package:chantier/widgets/dashed.dart';
-import 'package:chantier/widgets/primitives.dart';
+import 'package:ardoise/models/models.dart';
+import 'package:ardoise/theme/app_theme.dart';
+import 'package:ardoise/theme/tokens.dart';
+import 'package:ardoise/widgets/avatar.dart';
+import 'package:ardoise/widgets/dashed.dart';
+import 'package:ardoise/widgets/primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _lea = Person(id: 'L', name: 'Léa', color: Color(0xFFF8C2BC));
 
 Widget _host(Widget child) => MaterialApp(
-  theme: buildChantierTheme(),
+  theme: buildArdoiseTheme(),
   home: Scaffold(body: Center(child: child)),
 );
 
@@ -18,7 +18,7 @@ void main() {
   testWidgets('le thème porte la police Sour Gummy et le fond crème', (
     tester,
   ) async {
-    final theme = buildChantierTheme();
+    final theme = buildArdoiseTheme();
     expect(theme.scaffoldBackgroundColor, T.bg);
     expect(theme.textTheme.bodyMedium?.fontFamily, contains('SourGummy'));
   });

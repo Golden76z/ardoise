@@ -12,7 +12,7 @@ import 'primitives.dart';
 /// clic dehors, Échap et le piège à focus.
 Future<void> showRequestDetail(
   BuildContext context,
-  ChantierStore store,
+  ArdoiseStore store,
   int number,
 ) => showGeneralDialog<void>(
   context: context,
@@ -45,7 +45,7 @@ Future<void> showRequestDetail(
 class _Drawer extends StatelessWidget {
   const _Drawer({required this.store, required this.request});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Request request;
 
   @override
@@ -237,7 +237,7 @@ class _Field extends StatelessWidget {
 class _BigVote extends StatelessWidget {
   const _BigVote({required this.store, required this.request});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Request request;
 
   @override

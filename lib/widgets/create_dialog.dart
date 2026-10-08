@@ -9,7 +9,7 @@ import 'primitives.dart';
 /// La fenêtre de création. Échap annule (fond translucide de `showGeneralDialog`).
 Future<void> showCreateRequestDialog(
   BuildContext context,
-  ChantierStore store,
+  ArdoiseStore store,
 ) => showGeneralDialog<void>(
   context: context,
   barrierDismissible: true,
@@ -22,7 +22,7 @@ Future<void> showCreateRequestDialog(
 class _CreateDialog extends StatefulWidget {
   const _CreateDialog({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   State<_CreateDialog> createState() => _CreateDialogState();

@@ -17,7 +17,7 @@ class RequestCard extends StatelessWidget {
     required this.onOpen,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Request request;
   final VoidCallback onOpen;
 

@@ -17,7 +17,7 @@ class RequestListView extends StatelessWidget {
     required this.onOpenRequest,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final void Function(int) onOpenRequest;
 
   @override
@@ -54,7 +54,7 @@ class RequestListView extends StatelessWidget {
 class _SearchField extends StatefulWidget {
   const _SearchField({super.key, required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   State<_SearchField> createState() => _SearchFieldState();
@@ -138,7 +138,7 @@ class _SearchFieldState extends State<_SearchField> {
 class _EmptyList extends StatelessWidget {
   const _EmptyList({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +169,7 @@ class _ListRow extends StatelessWidget {
     required this.onOpen,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Request request;
   final VoidCallback onOpen;
 

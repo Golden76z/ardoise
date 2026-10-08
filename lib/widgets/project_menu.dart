@@ -32,7 +32,7 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 class ProjectMenu extends StatelessWidget {
   const ProjectMenu({super.key, required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -83,7 +83,7 @@ class ProjectMenu extends StatelessWidget {
 class _Dropdown extends StatelessWidget {
   const _Dropdown({required this.store, required this.anchor});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Offset anchor;
 
   static const _width = 340.0;
@@ -240,7 +240,7 @@ class _DeleteButton extends StatelessWidget {
 /// Échap annule, le fond translucide ferme.
 Future<void> showCreateProjectDialog(
   BuildContext context,
-  ChantierStore store,
+  ArdoiseStore store,
 ) => showGeneralDialog<void>(
   context: context,
   barrierDismissible: true,
@@ -252,7 +252,7 @@ Future<void> showCreateProjectDialog(
 
 Future<void> _showDeleteProjectDialog(
   BuildContext context,
-  ChantierStore store,
+  ArdoiseStore store,
   String id,
 ) => showGeneralDialog<void>(
   context: context,
@@ -342,7 +342,7 @@ class _Refusal extends StatelessWidget {
 class _CreateProjectDialog extends StatefulWidget {
   const _CreateProjectDialog({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   State<_CreateProjectDialog> createState() => _CreateProjectDialogState();
@@ -461,7 +461,7 @@ class _DeleteProjectDialog extends StatefulWidget {
     required this.count,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final Project project;
   final int count;
 

@@ -1,19 +1,19 @@
-import 'package:chantier/data/repository.dart';
-import 'package:chantier/data/seed.dart';
-import 'package:chantier/data/store.dart';
-import 'package:chantier/models/models.dart';
-import 'package:chantier/theme/tokens.dart';
+import 'package:ardoise/data/repository.dart';
+import 'package:ardoise/data/seed.dart';
+import 'package:ardoise/data/store.dart';
+import 'package:ardoise/models/models.dart';
+import 'package:ardoise/theme/tokens.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Un instantané d'exemple : les deux projets et toutes leurs demandes.
-ChantierSnapshot _snapshot([List<Request>? requests]) => ChantierSnapshot(
+ArdoiseSnapshot _snapshot([List<Request>? requests]) => ArdoiseSnapshot(
   projects: seedProjects,
   requests: requests ?? seedRequests,
 );
 
 /// Un store déjà chargé, calé sur octobre 2026 (le mois des données d'exemple).
-Future<ChantierStore> _store({MemoryRepository? repo, DateTime? today}) async {
-  final store = ChantierStore(
+Future<ArdoiseStore> _store({MemoryRepository? repo, DateTime? today}) async {
+  final store = ArdoiseStore(
     repository: repo ?? MemoryRepository(_snapshot()),
     today: today ?? DateTime(2026, 10, 8),
   );
@@ -40,7 +40,7 @@ void main() {
     () async {
       final repo = MemoryRepository(_snapshot())
         ..loadFailsWith = 'stockage inaccessible';
-      final store = ChantierStore(
+      final store = ArdoiseStore(
         repository: repo,
         today: DateTime(2026, 10, 8),
       );

@@ -1,22 +1,22 @@
-import 'package:chantier/board_page.dart';
-import 'package:chantier/data/repository.dart';
-import 'package:chantier/data/seed.dart';
-import 'package:chantier/data/store.dart';
-import 'package:chantier/models/models.dart';
-import 'package:chantier/theme/app_theme.dart';
+import 'package:ardoise/board_page.dart';
+import 'package:ardoise/data/repository.dart';
+import 'package:ardoise/data/seed.dart';
+import 'package:ardoise/data/store.dart';
+import 'package:ardoise/models/models.dart';
+import 'package:ardoise/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Future<ChantierStore> _pump(
+Future<ArdoiseStore> _pump(
   WidgetTester tester, {
   List<Project>? projects,
 }) async {
   tester.view.physicalSize = const Size(1600, 1800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  final store = ChantierStore(
+  final store = ArdoiseStore(
     repository: MemoryRepository(
-      ChantierSnapshot(
+      ArdoiseSnapshot(
         projects: projects ?? seedProjects,
         requests: seedRequests,
       ),
@@ -26,7 +26,7 @@ Future<ChantierStore> _pump(
   await store.init();
   await tester.pumpWidget(
     MaterialApp(
-      theme: buildChantierTheme(),
+      theme: buildArdoiseTheme(),
       home: BoardPage(store: store),
     ),
   );

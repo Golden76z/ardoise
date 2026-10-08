@@ -17,7 +17,7 @@ class BoardView extends StatelessWidget {
     required this.onOpenRequest,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final void Function(int number) onOpenRequest;
 
   @override
@@ -77,7 +77,7 @@ class _Column extends StatelessWidget {
     required this.onOpenRequest,
   });
 
-  final ChantierStore store;
+  final ArdoiseStore store;
   final BoardColumn column;
   final void Function(int number) onOpenRequest;
 

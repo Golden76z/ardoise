@@ -17,7 +17,7 @@ import 'widgets/primitives.dart';
 class BoardPage extends StatelessWidget {
   const BoardPage({super.key, required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -81,7 +81,7 @@ class BoardPage extends StatelessWidget {
 class _SaveErrorBanner extends StatelessWidget {
   const _SaveErrorBanner({required this.store});
 
-  final ChantierStore store;
+  final ArdoiseStore store;
 
   @override
   Widget build(BuildContext context) => InkOutline(

@@ -40,8 +40,8 @@ class BoardColumn {
 /// Tout l'état de l'app. Un seul notifieur : le tableau est une vue unique,
 /// et le découper en plusieurs blocs ne ferait que multiplier les
 /// synchronisations.
-class ChantierStore extends ChangeNotifier {
-  ChantierStore({required ChantierRepository repository, DateTime? today})
+class ArdoiseStore extends ChangeNotifier {
+  ArdoiseStore({required ArdoiseRepository repository, DateTime? today})
     // Un paramètre nommé ne peut pas être privé : le champ ne peut donc pas
     // être initialisé par un paramètre initialisateur.
     // ignore: prefer_initializing_formals
@@ -52,7 +52,7 @@ class ChantierStore extends ChangeNotifier {
       _now = today == null ? DateTime.now : (() => today),
       _visibleMonth = _monthOf(today ?? DateTime.now());
 
-  final ChantierRepository _repository;
+  final ArdoiseRepository _repository;
   final DateTime Function() _now;
 
   final List<Person> people = seedPeople;
@@ -418,7 +418,7 @@ class ChantierStore extends ChangeNotifier {
 
   void _persist() {
     _repository
-        .save(ChantierSnapshot(projects: _projects, requests: _requests))
+        .save(ArdoiseSnapshot(projects: _projects, requests: _requests))
         .then(
           (_) {
             if (_saveError == null) return;

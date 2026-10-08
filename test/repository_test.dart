@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:chantier/data/repository.dart';
-import 'package:chantier/data/seed.dart';
-import 'package:chantier/models/models.dart';
+import 'package:ardoise/data/repository.dart';
+import 'package:ardoise/data/seed.dart';
+import 'package:ardoise/models/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-ChantierSnapshot _seedSnapshot() =>
-    ChantierSnapshot(projects: seedProjects, requests: seedRequests);
+ArdoiseSnapshot _seedSnapshot() =>
+    ArdoiseSnapshot(projects: seedProjects, requests: seedRequests);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -135,14 +135,14 @@ void main() {
     final seeded = MemoryRepository(_seedSnapshot());
     expect((await seeded.load())!.requests, hasLength(15));
 
-    await seeded.save(const ChantierSnapshot(projects: [], requests: []));
+    await seeded.save(const ArdoiseSnapshot(projects: [], requests: []));
     expect((await seeded.load())!.requests, isEmpty);
   });
 
   test('le JSON écrit porte les projets et les demandes', () async {
     final repo = PrefsRepository();
     await repo.save(
-      ChantierSnapshot(
+      ArdoiseSnapshot(
         projects: seedProjects,
         requests: seedRequests.take(2).toList(),
       ),

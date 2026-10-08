@@ -1,4 +1,4 @@
-package dev.golden.chantier
+package dev.golden.ardoise
 
 import io.flutter.embedding.android.FlutterActivity
 

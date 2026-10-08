@@ -5,7 +5,7 @@ import 'tokens.dart';
 
 /// Le design est entièrement custom : le thème ne porte que la police, le fond
 /// et les couleurs de base. Chaque widget se style depuis `T`.
-ThemeData buildChantierTheme() {
+ThemeData buildArdoiseTheme() {
   final base = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(

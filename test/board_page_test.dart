@@ -1,17 +1,17 @@
-import 'package:chantier/board_page.dart';
-import 'package:chantier/data/repository.dart';
-import 'package:chantier/data/seed.dart';
-import 'package:chantier/data/store.dart';
-import 'package:chantier/models/models.dart';
-import 'package:chantier/theme/app_theme.dart';
-import 'package:chantier/theme/tokens.dart';
-import 'package:chantier/widgets/board_view.dart';
-import 'package:chantier/widgets/request_card.dart';
+import 'package:ardoise/board_page.dart';
+import 'package:ardoise/data/repository.dart';
+import 'package:ardoise/data/seed.dart';
+import 'package:ardoise/data/store.dart';
+import 'package:ardoise/models/models.dart';
+import 'package:ardoise/theme/app_theme.dart';
+import 'package:ardoise/theme/tokens.dart';
+import 'package:ardoise/widgets/board_view.dart';
+import 'package:ardoise/widgets/request_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Future<ChantierStore> _pump(
+Future<ArdoiseStore> _pump(
   WidgetTester tester, {
   List<Request>? requests,
 }) async {
@@ -20,9 +20,9 @@ Future<ChantierStore> _pump(
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
-  final store = ChantierStore(
+  final store = ArdoiseStore(
     repository: MemoryRepository(
-      ChantierSnapshot(
+      ArdoiseSnapshot(
         projects: seedProjects,
         requests: requests ?? seedRequests,
       ),
@@ -32,7 +32,7 @@ Future<ChantierStore> _pump(
   await store.init();
   await tester.pumpWidget(
     MaterialApp(
-      theme: buildChantierTheme(),
+      theme: buildArdoiseTheme(),
       home: BoardPage(store: store),
     ),
   );
@@ -194,13 +194,13 @@ void main() {
     addTearDown(tester.view.reset);
 
     final repo = MemoryRepository(
-      ChantierSnapshot(projects: seedProjects, requests: seedRequests),
+      ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
     )..failWith = 'disque plein';
-    final store = ChantierStore(repository: repo, today: DateTime(2026, 10, 8));
+    final store = ArdoiseStore(repository: repo, today: DateTime(2026, 10, 8));
     await store.init();
     await tester.pumpWidget(
       MaterialApp(
-        theme: buildChantierTheme(),
+        theme: buildArdoiseTheme(),
         home: BoardPage(store: store),
       ),
     );

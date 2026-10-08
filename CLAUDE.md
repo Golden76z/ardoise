@@ -1,4 +1,4 @@
-# Chantier
+# Ardoise
 
 Gestionnaire de demandes (bugs / fonctionnalités / idées) multi-projets.
 Flutter web + Android, **sans backend** : tout est local.
@@ -14,13 +14,13 @@ Flutter web + Android, **sans backend** : tout est local.
 Trois couches, et la frontière entre elles n'est pas négociable.
 
 - `lib/models/` — domaine pur. Aucun import Flutter hors `Color`.
-- `lib/data/` — un unique `ChantierStore` (`ChangeNotifier`) qui porte l'état,
-  les filtres et les mutations, derrière l'interface `ChantierRepository`.
+- `lib/data/` — un unique `ArdoiseStore` (`ChangeNotifier`) qui porte l'état,
+  les filtres et les mutations, derrière l'interface `ArdoiseRepository`.
   **Aucun filtrage ni tri dans les widgets** : le store sort des données déjà
   prêtes (`columns`, `listRequests`, `visibleRequests`).
 - `lib/widgets/` — ne fait que lire le store et le notifier.
 
-Le jour où une API arrive, on écrit une implémentation de `ChantierRepository`
+Le jour où une API arrive, on écrit une implémentation de `ArdoiseRepository`
 et rien d'autre ne bouge. C'est la seule raison d'être de cette interface.
 
 ## Commandes

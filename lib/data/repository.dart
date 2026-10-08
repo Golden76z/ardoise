@@ -7,7 +7,7 @@ import 'seed.dart';
 
 /// Frontière de persistance. Le jour où une API arrive (Rust / Axum), on écrit
 /// une autre implémentation ici et rien d'autre ne change.
-abstract class ChantierRepository {
+abstract class ArdoiseRepository {
   /// `null` quand il n'y a rien d'exploitable : premier lancement, ou données
   /// illisibles. L'appelant repart alors des données d'exemple.
   ///
@@ -15,11 +15,11 @@ abstract class ChantierRepository {
   /// illisible ». Dans le second cas l'utilisateur voit les données d'exemple
   /// sans un mot, et sa première écriture les grave. Aucun chemin connu ne
   /// produit un document V2 malformé aujourd'hui ; à distinguer (un champ
-  /// d'erreur sur le dépôt, lu par `ChantierStore.init`) dès le prochain
+  /// d'erreur sur le dépôt, lu par `ArdoiseStore.init`) dès le prochain
   /// changement de schéma.
-  Future<ChantierSnapshot?> load();
+  Future<ArdoiseSnapshot?> load();
 
-  Future<void> save(ChantierSnapshot snapshot);
+  Future<void> save(ArdoiseSnapshot snapshot);
 }
 
 /// Un document JSON dans les préférences. Suffisant pour la V2 (mono-
@@ -27,14 +27,17 @@ abstract class ChantierRepository {
 /// contrairement à SQLite qui réclame un worker wasm sur le web.
 /// ponytail: à remplacer par une base dès que les demandes dépassent le
 /// millier ou qu'une seconde personne écrit dans le même jeu de données.
-class PrefsRepository implements ChantierRepository {
+class PrefsRepository implements ArdoiseRepository {
+  // Le projet s'est appelé Chantier jusqu'au 08/10/2026. La clé garde ce
+  // nom : elle porte les données déjà enregistrées, et la renommer
+  // imposerait une migration de plus pour quelque chose d'invisible.
   static const storageKey = 'chantier.snapshot.v2';
 
   /// Clé de la V1 : une liste nue de demandes, toutes d'Échéo.
   static const legacyKey = 'chantier.requests.v1';
 
   @override
-  Future<ChantierSnapshot?> load() async {
+  Future<ArdoiseSnapshot?> load() async {
     // `getInstance()` doit rester DANS le `try` : il échoue quand le navigateur
     // bloque les données de site, et le contrat de `load` est de ne jamais
     // lever — sinon l'app reste figée sur son indicateur de chargement.
@@ -45,7 +48,7 @@ class PrefsRepository implements ChantierRepository {
         try {
           final decoded = jsonDecode(raw);
           if (decoded is Map<String, Object?>) {
-            return ChantierSnapshot.fromJson(decoded);
+            return ArdoiseSnapshot.fromJson(decoded);
           }
         } on Object {
           // On ne retombe pas tout de suite sur les données d'exemple : la
@@ -63,7 +66,7 @@ class PrefsRepository implements ChantierRepository {
 
   /// Reprise V1 → V2. On ne supprime pas l'ancienne clé : elle ne coûte rien
   /// et sert de filet si on revient en arrière.
-  ChantierSnapshot? _loadLegacy(SharedPreferences prefs) {
+  ArdoiseSnapshot? _loadLegacy(SharedPreferences prefs) {
     final raw = prefs.getString(legacyKey);
     if (raw == null) return null;
     final decoded = jsonDecode(raw);
@@ -73,24 +76,24 @@ class PrefsRepository implements ChantierRepository {
         .map(Request.fromJson) // `projectId` absent → 'echeo'
         .toList();
     // Le projet d'accueil doit exister, sinon les demandes sont orphelines.
-    return ChantierSnapshot(
+    return ArdoiseSnapshot(
       projects: [seedProjects.firstWhere((p) => p.id == 'echeo')],
       requests: requests,
     );
   }
 
   @override
-  Future<void> save(ChantierSnapshot snapshot) async {
+  Future<void> save(ArdoiseSnapshot snapshot) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(storageKey, jsonEncode(snapshot.toJson()));
   }
 }
 
 /// Double pour les tests : garde la dernière écriture en mémoire.
-class MemoryRepository implements ChantierRepository {
-  MemoryRepository([ChantierSnapshot? initial]) : stored = initial;
+class MemoryRepository implements ArdoiseRepository {
+  MemoryRepository([ArdoiseSnapshot? initial]) : stored = initial;
 
-  ChantierSnapshot? stored;
+  ArdoiseSnapshot? stored;
 
   /// Si non nul, `save` lève — pour tester le bandeau d'erreur.
   Object? failWith;
@@ -100,13 +103,13 @@ class MemoryRepository implements ChantierRepository {
   Object? loadFailsWith;
 
   @override
-  Future<ChantierSnapshot?> load() async {
+  Future<ArdoiseSnapshot?> load() async {
     if (loadFailsWith != null) throw loadFailsWith!;
     return stored;
   }
 
   @override
-  Future<void> save(ChantierSnapshot snapshot) async {
+  Future<void> save(ArdoiseSnapshot snapshot) async {
     if (failWith != null) throw failWith!;
     stored = snapshot;
   }
