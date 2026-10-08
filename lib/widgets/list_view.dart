@@ -242,18 +242,29 @@ class _ListRow extends StatelessWidget {
                 ],
               );
             }
+            // À l'étroit, le titre passe en premier et sur toute la
+            // largeur : c'est ce qu'on lit pour retrouver une demande. Le
+            // coller à droite de la référence le tassait à quelques
+            // caractères.
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    reference,
-                    const SizedBox(width: 10),
-                    Expanded(child: title),
-                  ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    request.title,
+                    style: TextStyles.cardTitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(spacing: 10, runSpacing: 8, children: meta),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [reference, ...meta],
+                ),
               ],
             );
           },

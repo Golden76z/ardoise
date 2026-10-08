@@ -37,6 +37,12 @@ ThemeData buildArdoiseTheme() {
   );
 }
 
+/// Vrai sur un écran de téléphone tenu en main. Tout l'habillage de la page
+/// (barre de navigation, titre, marges, lignes de liste) s'y adapte ; les
+/// panneaux, eux, se replient déjà correctement d'eux-mêmes.
+bool isPhone(BuildContext context) =>
+    MediaQuery.sizeOf(context).width < T.phoneBreakpoint;
+
 /// Styles de texte récurrents, pour ne pas répéter `fontWeight: w800` partout.
 abstract final class TextStyles {
   static const bold800 = TextStyle(fontWeight: FontWeight.w800, color: T.ink);

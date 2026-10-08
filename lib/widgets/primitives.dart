@@ -69,6 +69,9 @@ class InkOutline extends StatelessWidget {
   );
 }
 
+Widget _maybeExclude({required bool exclude, required Widget child}) =>
+    exclude ? ExcludeSemantics(child: child) : child;
+
 enum PillStyle { primary, ghost }
 
 /// Bouton en pilule. `onPressed: null` le désactive (opacité 45 %, prototype).
@@ -101,10 +104,15 @@ class PillButton extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            style: TextStyles.bold800.copyWith(
-              color: primary ? T.surface : T.ink,
+          // Quand un libellé accessible est fourni, le texte visible est
+          // décoratif : sans ça le lecteur d'écran dit « Nouvelle demande, + ».
+          _maybeExclude(
+            exclude: semanticLabel != null,
+            child: Text(
+              label,
+              style: TextStyles.bold800.copyWith(
+                color: primary ? T.surface : T.ink,
+              ),
             ),
           ),
         ],

@@ -77,6 +77,28 @@ flutter run -d chrome
    bandeau. Un silence sur une panne de lecture finit en perte de données :
    la première écriture grave les données d'exemple par-dessus le vrai travail.
 
+8. **Un `Row(mainAxisSize: .min)` ne replie rien.** Remplacer un `Wrap` par
+   une rangée décidée donne une meilleure mise en page, mais tout contenu de
+   largeur non bornée doit alors être `Flexible` avec `maxLines` et
+   `overflow: ellipsis`. `createProject` borne la clé à 5 caractères, **pas le
+   nom** : sans ellipsis, un projet au nom un peu long fait déborder la barre
+   de navigation. Même règle pour tout `Text` dans une boîte à hauteur figée,
+   qui serait sinon coupé en silence à grande échelle de police.
+9. **Un libellé visible retiré est aussi retiré au lecteur d'écran.** Le
+   segment perd son titre au téléphone : il le garde en `Semantics(label:)`.
+   Et quand un bouton porte un `semanticLabel`, son texte visible est
+   décoratif — `ExcludeSemantics`, sinon le lecteur annonce « Nouvelle
+   demande, + ».
+
+## Responsive
+
+Un seul point de rupture : `T.phoneBreakpoint` (600 px), lu par
+`isPhone(context)`. Il ne gouverne que **l'habillage de la page** — barre de
+navigation, titre, marges, segment, lignes de liste. Les panneaux (tiroir,
+dialogue de création, menu de projet) se replient déjà correctement d'eux-mêmes
+et n'ont pas de branche téléphone. `test/responsive_test.dart` monte l'app de
+280 à 1440 px.
+
 ## Vérifier
 
 Les tests de widget et le navigateur ne couvrent pas tout. Avant de déclarer

@@ -36,7 +36,14 @@ class BoardHeader extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(store.project.name, style: TextStyles.pageTitle),
+                Text(
+                  store.project.name,
+                  style: isPhone(context)
+                      ? TextStyles.pageTitle.copyWith(
+                          fontSize: T.fsPageTitlePhone,
+                        )
+                      : TextStyles.pageTitle,
+                ),
                 const SizedBox(height: 6),
                 Text(
                   list ? _listSubtitle : store.subtitle,
@@ -91,7 +98,15 @@ class _Segment<V> extends StatelessWidget {
   final void Function(V) onSelect;
 
   @override
-  Widget build(BuildContext context) => InkOutline(
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    // Au téléphone le libellé disparaît de l'écran : il doit rester au
+    // lecteur d'écran, sinon « Plus récentes » ne dit pas de quoi il s'agit.
+    label: label,
+    child: _box(context),
+  );
+
+  Widget _box(BuildContext context) => InkOutline(
     radius: 22,
     color: T.surface,
     padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
@@ -102,8 +117,12 @@ class _Segment<V> extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(label, style: TextStyles.meta),
-        const SizedBox(width: 4),
+        // Au téléphone le libellé coûte une ligne entière, et « Statut /
+        // Intervenant / Demandeur » se passe d'être annoncé.
+        if (!isPhone(context)) ...[
+          Text(label, style: TextStyles.meta),
+          const SizedBox(width: 4),
+        ],
         for (final (option, optionLabel) in options)
           _SegButton(
             label: optionLabel,

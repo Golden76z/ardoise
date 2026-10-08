@@ -50,7 +50,17 @@ class ProjectMenu extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${store.project.name} ▾', style: TextStyles.bold800),
+              // `createProject` ne borne pas la longueur du nom : sans
+              // `Flexible` + ellipsis, un projet au nom un peu long fait
+              // déborder la barre de navigation, en dur.
+              Flexible(
+                child: Text(
+                  '${store.project.name} ▾',
+                  style: TextStyles.bold800,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

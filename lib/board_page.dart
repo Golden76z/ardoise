@@ -33,10 +33,10 @@ class BoardPage extends StatelessWidget {
           }
           return SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                T.pagePadding,
+              padding: EdgeInsets.fromLTRB(
+                isPhone(context) ? T.pagePaddingPhone : T.pagePadding,
                 20,
-                T.pagePadding,
+                isPhone(context) ? T.pagePaddingPhone : T.pagePadding,
                 40,
               ),
               child: Column(

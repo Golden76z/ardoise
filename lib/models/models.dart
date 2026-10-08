@@ -264,6 +264,10 @@ String formatShortDate(DateTime date) =>
 /// « octobre »
 String formatMonthWord(DateTime date) => _frMonths[date.month - 1];
 
+/// « oct. 2026 » — pour les barres étroites, où « Octobre 2026 » déborde.
+String formatMonthLabelShort(DateTime date) =>
+    '${_frMonthsShort[date.month - 1]} ${date.year}';
+
 /// « Octobre 2026 »
 String formatMonthLabel(DateTime date) {
   final word = formatMonthWord(date);

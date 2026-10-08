@@ -91,7 +91,13 @@ abstract final class T {
   static const fsTiny = 12.0;
 
   // — Espacements et gabarits —
+  /// Point de rupture unique : en dessous, c'est un téléphone tenu en main.
+  /// Un seul seuil — deux suffisent rarement et trois ne se maintiennent pas.
+  static const phoneBreakpoint = 600.0;
+
   static const pagePadding = 24.0;
+  static const pagePaddingPhone = 16.0;
+  static const fsPageTitlePhone = 32.0;
   static const columnGap = 16.0;
   static const cardPadding = 14.0;
   static const cardGap = 10.0;
