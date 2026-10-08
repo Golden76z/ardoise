@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chantier — prototype de référence</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sour+Gummy:wght@400;600;800&display=swap">
+<!--
+  Prototype de référence (HTML + JS vanilla, aucune dépendance).
+  Sert de source de vérité visuelle et comportementale pour l'implémentation.
+  Les données sont en mémoire : rien n'est persisté.
+-->
+<style>
+:root {
+  --bg: #FFF4EC;
+  --bg-dot: #F1DCCB;
+  --surface: #FFFFFF;
+  --column: rgba(255, 255, 255, 0.65);
+  --ink: #4A2E22;
+  --muted: #8A5F48;
+  --line: #E2C3AE;
+  --line-strong: #C9A58E;
+  --accent: #B4532A;
+  --accent-soft: #FBE3D4;
+  --accent-ink: #9A4320;
+  --offset: #E39A74;
+  --project: #DDF3EF;
+  --shadow-card: 2px 2px 0 var(--offset), 0 4px 12px rgba(180, 83, 42, 0.10);
+  --shadow-nav: 0 4px 18px rgba(180, 83, 42, 0.12);
+  --shadow-panel: 3px 3px 0 var(--offset), 0 12px 40px rgba(74, 46, 34, 0.18);
+  --border: 1.5px solid var(--ink);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Sour Gummy', system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--bg-dot) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.app { min-height: 100vh; padding: 20px 24px 40px; display: flex; flex-direction: column; gap: 18px; }
+
+/* Barre de navigation en pilule */
+.nav { align-self: center; max-width: 100%; padding: 7px; background: var(--surface); border: var(--border); border-radius: 29px; box-shadow: var(--shadow-nav); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+.logo { width: 42px; height: 42px; display: grid; place-items: center; background: var(--accent); color: var(--bg); border-radius: 21px; font-weight: 800; font-size: 20px; }
+.nav-chip { height: 42px; padding: 0 14px; display: flex; align-items: center; border-radius: 21px; }
+.nav-chip.project { background: var(--project); border: var(--border); font-weight: 800; }
+.nav-chip.active { background: var(--accent-soft); color: var(--accent-ink); font-weight: 800; }
+.nav-chip.muted { color: var(--muted); padding: 0 12px; }
+.month { height: 42px; display: flex; align-items: center; gap: 2px; padding: 0 5px; background: var(--bg); border-radius: 21px; }
+.month button { width: 32px; height: 32px; border: none; background: var(--surface); border-radius: 16px; color: var(--accent); font-weight: 800; }
+.month span { min-width: 128px; text-align: center; font-weight: 800; }
+.btn-primary { height: 42px; padding: 0 18px; background: var(--accent); border: var(--border); border-radius: 21px; color: #FFFFFF; font-weight: 800; }
+.btn-ghost { height: 44px; padding: 0 18px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 22px; font-weight: 800; }
+
+/* En-tête */
+.header { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; }
+h1 { margin: 0; font-weight: 800; font-size: 48px; line-height: 1; }
+.sub { font-size: 14px; color: var(--muted); }
+.controls { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.seg { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; background: var(--surface); border: var(--border); border-radius: 22px; }
+.seg-label { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.seg button { height: 34px; padding: 0 13px; background: transparent; border: none; border-radius: 17px; font-weight: 800; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #FFFFFF; }
+.chips { display: flex; gap: 6px; }
+.chip { height: 36px; padding: 0 13px; display: flex; align-items: center; gap: 7px; border-radius: 18px; font-weight: 600; font-size: 14px; background: var(--surface); border: 1.5px dashed var(--line-strong); }
+.chip[aria-pressed="true"] { border: var(--border); }
+.chip b { font-weight: 800; }
+
+/* Barre de sélection des personnes (mode Intervenant / Demandeur) */
+.people-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255, 255, 255, 0.7); border: 1.5px dashed var(--line); border-radius: 18px; }
+.people-bar > span { font-size: 14px; font-weight: 600; color: var(--muted); margin-right: 4px; }
+.person-btn { height: 38px; padding: 0 12px 0 4px; display: flex; align-items: center; gap: 7px; border-radius: 19px; font-weight: 600; background: transparent; border: 1.5px dashed var(--line-strong); opacity: 0.6; }
+.person-btn[aria-pressed="true"] { background: var(--surface); border: var(--border); opacity: 1; }
+
+/* Avatars */
+.avatar { flex: none; border-radius: 50%; border: var(--border); display: grid; place-items: center; font-weight: 800; }
+.avatar.s { width: 24px; height: 24px; font-size: 11px; }
+.avatar.m { width: 28px; height: 28px; font-size: 12px; }
+.avatar.l { width: 38px; height: 38px; font-size: 16px; }
+.avatar.dashed { border-style: dashed; }
+.stack { display: flex; padding-left: 7px; }
+.stack .avatar { margin-left: -7px; }
+
+/* Tableau */
+.board-scroll { overflow-x: auto; padding-bottom: 8px; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 16px; align-items: start; }
+.column { display: flex; flex-direction: column; gap: 12px; padding: 12px; background: var(--column); border-radius: 24px; min-height: 200px; }
+.col-head { display: flex; align-items: center; gap: 8px; padding: 2px 6px; }
+.col-head h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.col-head .count.push { margin-left: auto; }
+.dot { width: 12px; height: 12px; border-radius: 6px; border: var(--border); }
+.count { min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.empty { padding: 18px 12px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line); border-radius: 16px; font-size: 14px; }
+
+/* Carte de demande */
+.card { padding: 14px; border: var(--border); border-radius: 20px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 10px; }
+.card-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+.vote { height: 28px; padding: 0 9px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; color: var(--accent-ink); font-weight: 800; }
+.card-title { padding: 0; background: none; border: none; text-align: left; font-weight: 800; font-size: 17px; line-height: 1.25; }
+.card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.req { display: flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; background: var(--surface); border-radius: 20px; font-size: 13px; font-weight: 600; }
+.status-pill { height: 26px; padding: 0 10px; display: flex; align-items: center; border: var(--border); border-radius: 13px; font-size: 12px; font-weight: 800; }
+.assignee { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+
+/* Panneau de détail et fenêtre de création */
+.backdrop { position: fixed; inset: 0; background: rgba(74, 46, 34, 0.18); border: none; cursor: default; }
+.drawer { position: fixed; top: 16px; right: 16px; bottom: 16px; width: 420px; max-width: calc(100% - 32px); overflow-y: auto; padding: 22px; background: var(--surface); border: var(--border); border-radius: 26px; box-shadow: var(--shadow-panel); display: flex; flex-direction: column; gap: 18px; }
+.dialog { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); width: 480px; max-width: calc(100% - 32px); padding: 24px; background: var(--surface); border: var(--border); border-radius: 26px; box-shadow: var(--shadow-panel); display: flex; flex-direction: column; gap: 16px; }
+.panel-top { display: flex; align-items: center; gap: 8px; }
+.type-pill { font-size: 13px; font-weight: 800; padding: 3px 10px; border: var(--border); border-radius: 12px; }
+.close { margin-left: auto; width: 36px; height: 36px; background: var(--bg); border: 1.5px solid var(--line); border-radius: 18px; font-weight: 800; }
+.panel-title { margin: 0; font-weight: 800; font-size: 28px; line-height: 1.15; }
+.desc { margin: 0; color: #6E4A38; line-height: 1.5; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field-label { font-size: 13px; font-weight: 800; color: var(--muted); }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt { height: 36px; padding: 0 13px; background: var(--surface); border: 1.5px solid var(--line); border-radius: 18px; font-weight: 800; }
+.opt[aria-pressed="true"] { border-color: var(--ink); }
+.opt.person { height: 38px; padding: 0 12px 0 4px; display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.opt.person[aria-pressed="true"] { background: var(--accent-soft); }
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-top: 14px; border-top: 1.5px dashed var(--line); }
+.big-vote { height: 44px; padding: 0 16px; background: var(--accent-soft); border: var(--border); border-radius: 22px; box-shadow: 2px 2px 0 var(--offset); color: var(--accent-ink); font-weight: 800; font-size: 16px; }
+.text-input { height: 46px; padding: 0 14px; background: var(--bg); border: var(--border); border-radius: 16px; font-size: 16px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 6px; }
+.dialog-actions .btn-primary { height: 44px; border-radius: 22px; padding: 0 20px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ---------- Référentiels ----------
+const PEOPLE = {
+  D: { name: 'Damien', color: '#EFC4A6' },
+  T: { name: 'Tom', color: '#CBE4B6' },
+  I: { name: 'Inès', color: '#F6E19A' },
+  L: { name: 'Léa', color: '#F8C2BC' },
+  K: { name: 'Karim', color: '#F8CFA2' }
+};
+const PEOPLE_ORDER = ['D', 'T', 'I', 'L', 'K'];
+const CURRENT_USER = 'D';
+
+const TYPES = {
+  bug: { label: 'Bug', filter: 'Bugs', fill: '#FDE1DC' },
+  feature: { label: 'Fonctionnalité', filter: 'Fonct.', fill: '#FDE7D6' },
+  idea: { label: 'Idée', filter: 'Idées', fill: '#FCF1CC' }
+};
+const STATUSES = [
+  { key: 'todo', name: 'À faire', fill: '#F3E6DB' },
+  { key: 'doing', name: 'En cours', fill: '#FCEBC4' },
+  { key: 'review', name: 'En revue', fill: '#F9DCCB' },
+  { key: 'done', name: 'Fait', fill: '#DDEFD3' }
+];
+const MONTHS = [
+  { key: 9, label: 'Septembre 2026', word: 'septembre', short: 'sept.' },
+  { key: 10, label: 'Octobre 2026', word: 'octobre', short: 'oct.' },
+  { key: 11, label: 'Novembre 2026', word: 'novembre', short: 'nov.' }
+];
+
+// ---------- Données d'exemple (projet Échéo) ----------
+const SEED = [
+  { id: 'ECH-48', title: 'Crash à l’import depuis la galerie', desc: 'L’app plante sur Android 14 quand on importe des photos HEIC depuis la galerie.', type: 'bug', status: 'todo', req: 'L', who: 'D', votes: 3, voters: ['K', 'T'], month: 10, date: '7 oct.' },
+  { id: 'ECH-51', title: 'Export PDF multi-pages', desc: 'Réunir plusieurs scans dans un seul PDF à partager.', type: 'feature', status: 'todo', req: 'K', who: 'T', votes: 5, voters: ['L', 'I', 'T'], month: 10, date: '2 oct.' },
+  { id: 'ECH-53', title: 'Dossiers intelligents par type', desc: 'Classer automatiquement factures, contrats et tickets de caisse.', type: 'idea', status: 'todo', req: 'I', who: null, votes: 2, voters: ['D'], month: 10, date: '6 oct.' },
+  { id: 'ECH-42', title: 'Recadrage automatique des bords', desc: 'Détecter les 4 coins du document et corriger la perspective.', type: 'feature', status: 'doing', req: 'T', who: 'D', votes: 7, voters: ['L', 'K', 'I'], month: 10, date: '1 oct.' },
+  { id: 'ECH-47', title: 'OCR lent au-delà de 20 pages', desc: 'Traiter les pages en parallèle pour accélérer l’OCR.', type: 'bug', status: 'doing', req: 'D', who: 'I', votes: 1, voters: [], month: 10, date: '5 oct.' },
+  { id: 'ECH-39', title: 'Recherche plein texte dans les scans', desc: 'Indexer le texte OCR pour pouvoir chercher dans tous les documents.', type: 'feature', status: 'review', req: 'L', who: 'T', votes: 4, voters: ['K', 'T'], month: 10, date: '3 oct.' },
+  { id: 'ECH-35', title: 'Mode sombre', desc: 'Un thème sombre qui suit le réglage du système.', type: 'feature', status: 'done', req: 'I', who: 'I', votes: 9, voters: ['L', 'K', 'T'], month: 10, date: '1 oct.' },
+  { id: 'ECH-40', title: 'Rotation perdue après sauvegarde', desc: 'La rotation appliquée à une page n’est pas conservée.', type: 'bug', status: 'done', req: 'K', who: 'D', votes: 2, voters: ['I'], month: 10, date: '4 oct.' },
+  { id: 'ECH-30', title: 'Onboarding en 3 écrans', desc: 'Présenter le scan, le classement et le partage au premier lancement.', type: 'feature', status: 'done', req: 'L', who: 'I', votes: 6, voters: ['K', 'T', 'D'], month: 9, date: '12 sept.' },
+  { id: 'ECH-31', title: 'Plantage au démarrage sur iOS 17', desc: 'Crash au lancement sur certains iPhone.', type: 'bug', status: 'done', req: 'T', who: 'D', votes: 4, voters: ['L', 'I'], month: 9, date: '18 sept.' },
+  { id: 'ECH-33', title: 'Thème pastel personnalisable', desc: 'Laisser choisir une couleur d’accent.', type: 'idea', status: 'review', req: 'I', who: null, votes: 3, voters: ['L', 'K'], month: 9, date: '25 sept.' },
+  { id: 'ECH-56', title: 'Synchronisation iCloud', desc: 'Retrouver ses documents sur tous ses appareils Apple.', type: 'feature', status: 'todo', req: 'K', who: null, votes: 2, voters: ['L'], month: 11, date: '2 nov.' },
+  { id: 'ECH-57', title: 'Widget écran d’accueil', desc: 'Scanner en un tap depuis l’écran d’accueil.', type: 'idea', status: 'todo', req: 'L', who: 'T', votes: 1, voters: [], month: 11, date: '4 nov.' }
+];
+
+// ---------- État ----------
+const state = {
+  groupBy: 'status',          // 'status' | 'who' (intervenant) | 'req' (demandeur)
+  month: 1,                   // index dans MONTHS
+  types: { bug: true, feature: true, idea: true },
+  shown: { D: true, T: true, I: true, L: true, K: true },
+  openId: null,
+  modal: false,
+  draft: { title: '', type: 'feature', who: 'D' },
+  nextId: 58,
+  cards: SEED.map((c) => ({ ...c, voters: [...c.voters] }))
+};
+
+// ---------- Utilitaires ----------
+const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const person = (k) => (k ? { key: k, i: PEOPLE[k].name[0], name: PEOPLE[k].name, color: PEOPLE[k].color } : { key: null, i: '?', name: 'Non assigné', color: '#EFE3D8' });
+const avatar = (p, size = 's', extra = '') => `<span class="avatar ${size} ${extra}" style="background:${p.color}" role="img" aria-label="${esc(p.name)}">${esc(p.i)}</span>`;
+const statusOf = (key) => STATUSES.find((s) => s.key === key);
+const findCard = (id) => state.cards.find((c) => c.id === id);
+
+// ---------- Rendu ----------
+function renderCard(c) {
+  const req = person(c.req);
+  const who = person(c.who);
+  const st = statusOf(c.status);
+  return `
+  <article class="card" style="background:${TYPES[c.type].fill}">
+    <div class="card-top">
+      <span>${esc(c.id)} · ${esc(c.date)}</span>
+      <button type="button" class="vote" data-action="vote" data-id="${c.id}" aria-label="Voter pour ${esc(c.title)}">▲ ${c.votes}</button>
+    </div>
+    <button type="button" class="card-title" data-action="open" data-id="${c.id}">${esc(c.title)}</button>
+    <div class="card-foot">
+      <span class="req">${avatar(req)}${esc(req.name)}</span>
+      ${state.groupBy !== 'status' ? `<span class="status-pill" style="background:${st.fill}">${st.name}</span>` : ''}
+      ${state.groupBy !== 'who' ? `<span class="assignee" title="Intervenant : ${esc(who.name)}">→ ${avatar(who, 'm', 'dashed')}</span>` : ''}
+    </div>
+  </article>`;
+}
+
+function buildColumns(visible) {
+  if (state.groupBy === 'status') {
+    return STATUSES.map((st) => ({
+      head: `<span class="dot" style="background:${st.fill}"></span><h2>${st.name}</h2>`,
+      cards: visible.filter((c) => c.status === st.key)
+    }));
+  }
+  const field = state.groupBy; // 'who' ou 'req'
+  const cols = PEOPLE_ORDER.filter((k) => state.shown[k]).map((k) => ({
+    head: `${avatar(person(k), 'l')}<h2>${esc(PEOPLE[k].name)}</h2>`,
+    cards: visible.filter((c) => c[field] === k),
+    push: true
+  }));
+  if (field === 'who') {
+    cols.push({ head: `${avatar(person(null), 'l')}<h2>Non assigné</h2>`, cards: visible.filter((c) => !c.who), push: true });
+  }
+  return cols;
+}
+
+function renderDrawer() {
+  const c = findCard(state.openId);
+  if (!c) return '';
+  const req = person(c.req);
+  return `
+  <button type="button" class="backdrop" data-action="close-drawer" aria-label="Fermer le détail"></button>
+  <aside class="drawer" aria-label="Détail de la demande">
+    <div class="panel-top">
+      <span class="type-pill" style="background:${TYPES[c.type].fill}">${TYPES[c.type].label}</span>
+      <span class="sub">${esc(c.id)} · ${esc(c.date)}</span>
+      <button type="button" class="close" data-action="close-drawer" aria-label="Fermer">✕</button>
+    </div>
+    <div class="field">
+      <h2 class="panel-title">${esc(c.title)}</h2>
+      <p class="desc">${esc(c.desc)}</p>
+    </div>
+    <div class="field">
+      <span class="field-label">Statut</span>
+      <div class="opts">${STATUSES.map((st) => `<button type="button" class="opt" data-action="set-status" data-id="${c.id}" data-value="${st.key}" aria-pressed="${c.status === st.key}" style="${c.status === st.key ? `background:${st.fill}` : ''}">${st.name}</button>`).join('')}</div>
+    </div>
+    <div class="field">
+      <span class="field-label">Intervenant</span>
+      <div class="opts">${[...PEOPLE_ORDER, null].map((k) => { const p = person(k); return `<button type="button" class="opt person" data-action="set-who" data-id="${c.id}" data-value="${k || ''}" aria-pressed="${c.who === k}">${avatar(p, 'm')}${k ? esc(p.name) : 'Personne'}</button>`; }).join('')}</div>
+    </div>
+    <div class="panel-foot">
+      <div class="field">
+        <span class="field-label">Demandé par</span>
+        <span class="req">${avatar(req, 'm')}${esc(req.name)}</span>
+      </div>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <div class="stack">${c.voters.slice(0, 4).map((k) => avatar(person(k))).join('')}</div>
+        <button type="button" class="big-vote" data-action="vote" data-id="${c.id}">▲ ${c.votes} votes</button>
+      </div>
+    </div>
+  </aside>`;
+}
+
+function renderModal() {
+  if (!state.modal) return '';
+  const d = state.draft;
+  return `
+  <button type="button" class="backdrop" data-action="close-modal" aria-label="Annuler"></button>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h2 class="panel-title" id="dialog-title">Nouvelle demande</h2>
+    <div class="field">
+      <label class="field-label" for="draft-title">Titre</label>
+      <input id="draft-title" class="text-input" type="text" value="${esc(d.title)}" placeholder="Ex. : export en CSV des scans">
+    </div>
+    <div class="field">
+      <span class="field-label">Type</span>
+      <div class="opts">${Object.keys(TYPES).map((k) => `<button type="button" class="opt" data-action="draft-type" data-value="${k}" aria-pressed="${d.type === k}" style="${d.type === k ? `background:${TYPES[k].fill}` : ''}">${TYPES[k].label}</button>`).join('')}</div>
+    </div>
+    <div class="field">
+      <span class="field-label">Intervenant</span>
+      <div class="opts">${[...PEOPLE_ORDER, null].map((k) => { const p = person(k); return `<button type="button" class="opt person" data-action="draft-who" data-value="${k || ''}" aria-pressed="${d.who === k}">${avatar(p, 'm')}${k ? esc(p.name) : 'Personne'}</button>`; }).join('')}</div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-ghost" data-action="close-modal">Annuler</button>
+      <button type="button" class="btn-primary" data-action="create" id="create-btn" ${d.title.trim() ? '' : 'disabled'}>Créer la demande</button>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const m = MONTHS[state.month];
+  const inMonth = state.cards.filter((c) => c.month === m.key);
+  const visible = inMonth.filter((c) => state.types[c.type]);
+  const columns = buildColumns(visible);
+  const personMode = state.groupBy !== 'status';
+
+  document.getElementById('app').innerHTML = `
+  <div class="app">
+    <nav class="nav" aria-label="Navigation principale">
+      <span class="logo">C</span>
+      <span class="nav-chip project">Échéo ▾</span>
+      <span class="nav-chip active">Tableau</span>
+      <span class="nav-chip muted">Liste</span>
+      <span class="nav-chip muted">Votes</span>
+      <div class="month">
+        <button type="button" data-action="prev-month" aria-label="Mois précédent" ${state.month === 0 ? 'disabled' : ''}>‹</button>
+        <span aria-live="polite">${m.label}</span>
+        <button type="button" data-action="next-month" aria-label="Mois suivant" ${state.month === MONTHS.length - 1 ? 'disabled' : ''}>›</button>
+      </div>
+      <button type="button" class="btn-primary" data-action="open-modal">+ Demande</button>
+    </nav>
+
+    <header class="header">
+      <div>
+        <h1>Échéo</h1>
+        <span class="sub">${visible.length} demande${visible.length > 1 ? 's' : ''} en ${m.word} · Jalon v0.4 · 64 %</span>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Organiser les colonnes par">
+          <span class="seg-label">Colonnes</span>
+          ${[['status', 'Statut'], ['who', 'Intervenant'], ['req', 'Demandeur']].map(([k, l]) => `<button type="button" data-action="group" data-value="${k}" aria-pressed="${state.groupBy === k}">${l}</button>`).join('')}
+        </div>
+        <div class="chips" role="group" aria-label="Filtrer par type">
+          ${Object.keys(TYPES).map((k) => `<button type="button" class="chip" data-action="toggle-type" data-value="${k}" aria-pressed="${state.types[k]}" style="${state.types[k] ? `background:${TYPES[k].fill}` : ''}">${TYPES[k].filter} <b>${inMonth.filter((c) => c.type === k).length}</b></button>`).join('')}
+        </div>
+      </div>
+    </header>
+
+    ${personMode ? `
+    <div class="people-bar" role="group" aria-label="Personnes affichées">
+      <span>${state.groupBy === 'who' ? 'Intervenants affichés' : 'Demandeurs affichés'}</span>
+      ${PEOPLE_ORDER.map((k) => `<button type="button" class="person-btn" data-action="toggle-person" data-value="${k}" aria-pressed="${state.shown[k]}">${avatar(person(k), 'm')}${esc(PEOPLE[k].name)}</button>`).join('')}
+    </div>` : ''}
+
+    <div class="board-scroll">
+      <div class="board">
+        ${columns.map((col) => `
+        <section class="column">
+          <div class="col-head">${col.head}<span class="count ${col.push ? 'push' : ''}">${col.cards.length}</span></div>
+          ${col.cards.length ? col.cards.map(renderCard).join('') : '<div class="empty">Rien ce mois-ci</div>'}
+        </section>`).join('')}
+      </div>
+    </div>
+  </div>
+  ${renderDrawer()}
+  ${renderModal()}`;
+
+  if (state.modal) {
+    const input = document.getElementById('draft-title');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+}
+
+// ---------- Actions ----------
+const actions = {
+  'prev-month': () => { state.month = Math.max(0, state.month - 1); },
+  'next-month': () => { state.month = Math.min(MONTHS.length - 1, state.month + 1); },
+  group: (el) => { state.groupBy = el.dataset.value; },
+  'toggle-type': (el) => { const k = el.dataset.value; state.types[k] = !state.types[k]; },
+  'toggle-person': (el) => { const k = el.dataset.value; state.shown[k] = !state.shown[k]; },
+  vote: (el) => {
+    const c = findCard(el.dataset.id);
+    c.votes += 1;
+    if (!c.voters.includes(CURRENT_USER)) c.voters.unshift(CURRENT_USER);
+  },
+  open: (el) => { state.openId = el.dataset.id; },
+  'close-drawer': () => { state.openId = null; },
+  'set-status': (el) => { findCard(el.dataset.id).status = el.dataset.value; },
+  'set-who': (el) => { findCard(el.dataset.id).who = el.dataset.value || null; },
+  'open-modal': () => { state.modal = true; },
+  'close-modal': () => { state.modal = false; },
+  'draft-type': (el) => { state.draft.type = el.dataset.value; },
+  'draft-who': (el) => { state.draft.who = el.dataset.value || null; },
+  create: () => {
+    const d = state.draft;
+    if (!d.title.trim()) return;
+    const m = MONTHS[state.month];
+    state.cards.unshift({
+      id: 'ECH-' + state.nextId,
+      title: d.title.trim(),
+      desc: 'Ajoutée depuis le prototype.',
+      type: d.type,
+      status: 'todo',
+      req: CURRENT_USER,
+      who: d.who,
+      votes: 0,
+      voters: [],
+      month: m.key,
+      date: '8 ' + m.short
+    });
+    state.nextId += 1;
+    state.modal = false;
+    state.draft = { title: '', type: 'feature', who: 'D' };
+  }
+};
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.disabled) return;
+  const fn = actions[el.dataset.action];
+  if (fn) { fn(el); render(); }
+});
+
+// Saisie du titre sans re-rendu complet (garde le focus)
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'draft-title') return;
+  state.draft.title = e.target.value;
+  document.getElementById('create-btn').disabled = !state.draft.title.trim();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && (state.modal || state.openId)) {
+    state.modal = false;
+    state.openId = null;
+    render();
+  }
+  if (e.key === 'Enter' && e.target.id === 'draft-title') actions.create(), render();
+});
+
+render();
+</script>
+</body>
+</html>

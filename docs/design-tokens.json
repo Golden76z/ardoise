@@ -1,0 +1,68 @@
+{
+  "name": "Chantier — Mix 1",
+  "font": {
+    "family": "Sour Gummy",
+    "source": "https://fonts.google.com/specimen/Sour+Gummy",
+    "weights": { "regular": 400, "semibold": 600, "bold": 800 },
+    "sizes": {
+      "pageTitle": 48,
+      "panelTitle": 28,
+      "columnTitle": 18,
+      "cardTitle": 17,
+      "body": 15,
+      "small": 14,
+      "meta": 13,
+      "tiny": 12
+    }
+  },
+  "color": {
+    "background": "#FFF4EC",
+    "backgroundDot": "#F1DCCB",
+    "surface": "#FFFFFF",
+    "column": "rgba(255,255,255,0.65)",
+    "ink": "#4A2E22",
+    "muted": "#8A5F48",
+    "line": "#E2C3AE",
+    "lineStrong": "#C9A58E",
+    "accent": "#B4532A",
+    "accentSoft": "#FBE3D4",
+    "accentInk": "#9A4320",
+    "shadowOffset": "#E39A74",
+    "project": "#DDF3EF",
+    "unassigned": "#EFE3D8",
+    "type": {
+      "bug": "#FDE1DC",
+      "feature": "#FDE7D6",
+      "idea": "#FCF1CC"
+    },
+    "status": {
+      "todo": "#F3E6DB",
+      "doing": "#FCEBC4",
+      "review": "#F9DCCB",
+      "done": "#DDEFD3"
+    },
+    "personPalette": ["#EFC4A6", "#CBE4B6", "#F6E19A", "#F8C2BC", "#F8CFA2"]
+  },
+  "border": {
+    "width": 1.5,
+    "color": "#4A2E22",
+    "dashedColor": "#C9A58E"
+  },
+  "radius": {
+    "nav": 29,
+    "navItem": 21,
+    "panel": 26,
+    "column": 24,
+    "card": 20,
+    "chip": 18,
+    "smallChip": 12
+  },
+  "shadow": {
+    "card": "2px 2px 0 #E39A74, 0 4px 12px rgba(180,83,42,0.10)",
+    "nav": "0 4px 18px rgba(180,83,42,0.12)",
+    "panel": "3px 3px 0 #E39A74, 0 12px 40px rgba(74,46,34,0.18)"
+  },
+  "backgroundPattern": "radial-gradient(#F1DCCB 1.2px, transparent 1.2px), 20px x 20px",
+  "spacing": { "pagePadding": 24, "columnGap": 16, "cardPadding": 14, "cardGap": 10 },
+  "layout": { "columnMinWidth": 250, "drawerWidth": 420, "dialogWidth": 480 }
+}
