@@ -97,6 +97,12 @@ class ArdoiseStore extends ChangeNotifier {
     // ne doit pas laisser l'utilisateur devant un indicateur qui tourne.
     try {
       final snapshot = await _repository.load();
+      final failure = _repository.lastLoadError;
+      if (failure != null) {
+        // Des données existent peut-être : le dire, sinon la première
+        // écriture remplace du vrai travail par des données d'exemple.
+        _saveError = 'Lecture des données impossible ($failure).';
+      }
       _projects = snapshot?.projects ?? seedProjects;
       _requests = snapshot?.requests ?? seedRequests;
       if (_projects.isEmpty) {

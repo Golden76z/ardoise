@@ -8,16 +8,18 @@ import 'seed.dart';
 /// Frontière de persistance. Le jour où une API arrive (Rust / Axum), on écrit
 /// une autre implémentation ici et rien d'autre ne change.
 abstract class ArdoiseRepository {
-  /// `null` quand il n'y a rien d'exploitable : premier lancement, ou données
-  /// illisibles. L'appelant repart alors des données d'exemple.
+  /// `null` quand il n'y a rien à charger. Ne lève jamais : une app figée sur
+  /// son indicateur de chargement serait pire que des données d'exemple.
   ///
-  /// ponytail: `null` confond « rien d'enregistré » et « enregistré mais
-  /// illisible ». Dans le second cas l'utilisateur voit les données d'exemple
-  /// sans un mot, et sa première écriture les grave. Aucun chemin connu ne
-  /// produit un document V2 malformé aujourd'hui ; à distinguer (un champ
-  /// d'erreur sur le dépôt, lu par `ArdoiseStore.init`) dès le prochain
-  /// changement de schéma.
+  /// Quand l'échec n'est pas « rien d'enregistré » mais une vraie panne,
+  /// `lastLoadError` le dit. Les confondre a coûté cher : un canal de
+  /// plateforme indisponible rendait `null`, l'app affichait les données
+  /// d'exemple sans un mot, et la première écriture les gravait.
   Future<ArdoiseSnapshot?> load();
+
+  /// Renseigné quand le dernier `load` a échoué, `null` quand il n'y avait
+  /// simplement rien d'enregistré. `ArdoiseStore.init` le remonte à l'écran.
+  String? get lastLoadError;
 
   Future<void> save(ArdoiseSnapshot snapshot);
 }
@@ -28,6 +30,9 @@ abstract class ArdoiseRepository {
 /// ponytail: à remplacer par une base dès que les demandes dépassent le
 /// millier ou qu'une seconde personne écrit dans le même jeu de données.
 class PrefsRepository implements ArdoiseRepository {
+  @override
+  String? lastLoadError;
+
   // Le projet s'est appelé Chantier jusqu'au 08/10/2026. La clé garde ce
   // nom : elle porte les données déjà enregistrées, et la renommer
   // imposerait une migration de plus pour quelque chose d'invisible.
@@ -41,6 +46,7 @@ class PrefsRepository implements ArdoiseRepository {
     // `getInstance()` doit rester DANS le `try` : il échoue quand le navigateur
     // bloque les données de site, et le contrat de `load` est de ne jamais
     // lever — sinon l'app reste figée sur son indicateur de chargement.
+    lastLoadError = null;
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(storageKey);
@@ -57,9 +63,9 @@ class PrefsRepository implements ArdoiseRepository {
         }
       }
       return _loadLegacy(prefs);
-    } on Object {
-      // Ancien format ou document corrompu : mieux vaut les données d'exemple
-      // qu'un écran blanc.
+    } on Object catch (error) {
+      // Mieux vaut les données d'exemple qu'un écran blanc — mais on le dit.
+      lastLoadError = '$error';
       return null;
     }
   }
@@ -93,6 +99,9 @@ class PrefsRepository implements ArdoiseRepository {
 class MemoryRepository implements ArdoiseRepository {
   MemoryRepository([ArdoiseSnapshot? initial]) : stored = initial;
 
+  @override
+  String? lastLoadError;
+
   ArdoiseSnapshot? stored;
 
   /// Si non nul, `save` lève — pour tester le bandeau d'erreur.
@@ -104,7 +113,11 @@ class MemoryRepository implements ArdoiseRepository {
 
   @override
   Future<ArdoiseSnapshot?> load() async {
-    if (loadFailsWith != null) throw loadFailsWith!;
+    lastLoadError = null;
+    if (loadFailsWith != null) {
+      lastLoadError = '$loadFailsWith';
+      return null;
+    }
     return stored;
   }
 

@@ -59,6 +59,36 @@ flutter run -d chrome
    `InkWell` dans un dialogue en réclame un (`Material(type: transparency)`).
 4. **Matchers de sémantique** : `hasFlag` et `containsSemantics` sont
    dépréciés. Utiliser `isSemantics(...)`.
-5. **Glisser-déposer en test** : un geste doit franchir `kTouchSlop` avant
-   d'être reconnu. Dans un vrai navigateur, un glisser trop rapide n'est pas
-   détecté non plus — donner une durée au geste.
+5. **Glisser-déposer** : au doigt la carte ne se saisit qu'à l'**appui long**
+   (`LongPressDraggable`), sinon elle accapare le geste et le tableau devient
+   impossible à faire défiler sur un téléphone. À la souris, `Draggable`
+   immédiat. En test, `defaultTargetPlatform` vaut `android` : il faut tenir
+   `kLongPressTimeout` avant de bouger, puis franchir `kTouchSlop`.
+6. **Canaux de plateforme avant `runApp`.** `main()` doit appeler
+   `WidgetsFlutterBinding.ensureInitialized()` avant tout ce qui touche un
+   plugin. Sans ça, `SharedPreferences.getInstance()` lève « Binding has not
+   yet been initialized » — **et uniquement sur mobile**, parce que
+   l'implémentation web lit le `localStorage` sans canal. Résultat vécu : les
+   données étaient bien écrites et jamais relues, l'app repartait des données
+   d'exemple à chaque lancement, et **104 tests verts n'y voyaient rien**.
+7. **Ne jamais confondre « rien d'enregistré » et « lecture en panne ».** Le
+   `null` de `load()` cachait le bug ci-dessus pendant une journée. D'où
+   `ArdoiseRepository.lastLoadError`, que `ArdoiseStore.init` remonte en
+   bandeau. Un silence sur une panne de lecture finit en perte de données :
+   la première écriture grave les données d'exemple par-dessus le vrai travail.
+
+## Vérifier
+
+Les tests de widget et le navigateur ne couvrent pas tout. Avant de déclarer
+une fonctionnalité finie, **la lancer sur un vrai téléphone** :
+
+```bash
+flutter run -d <id>                       # `flutter devices` pour l'id
+adb exec-out screencap -p > /tmp/x.png    # regarder le résultat
+adb shell am force-stop dev.golden.ardoise && \
+  adb shell monkey -p dev.golden.ardoise -c android.intent.category.LAUNCHER 1
+```
+
+Le redémarrage à froid **sans réinstallation** est le seul test qui prouve
+que la persistance tient. `flutter run` réinstalle l'APK et masque le
+problème.

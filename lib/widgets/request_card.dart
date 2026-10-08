@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../data/store.dart';
@@ -27,25 +28,51 @@ class RequestCard extends StatelessWidget {
     // Le demandeur est un fait, pas un état : rien à déplacer dans ce mode.
     if (store.grouping == BoardGrouping.requester) return card;
 
+    final feedback = Material(
+      type: MaterialType.transparency,
+      child: Opacity(
+        opacity: 0.9,
+        child: Transform.rotate(
+          angle: 0.02,
+          // Rendu dans l'`Overlay`, hors de l'arbre : aucune contrainte
+          // héritée, d'où la largeur explicite.
+          child: SizedBox(width: T.columnMinWidth - 24, child: card),
+        ),
+      ),
+    );
+    final ghost = Opacity(opacity: 0.35, child: card);
+
+    // Au doigt, un simple glissement doit faire défiler le tableau : sur un
+    // téléphone les cartes couvrent presque tout l'écran, et une carte qui
+    // accapare le geste rend le défilement impossible. La carte ne se saisit
+    // donc qu'à l'appui long. À la souris il n'y a pas d'ambiguïté, et le
+    // glissement immédiat est plus direct.
+    if (_touchPlatform) {
+      return LongPressDraggable<int>(
+        data: request.number,
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        feedback: feedback,
+        childWhenDragging: ghost,
+        child: card,
+      );
+    }
     return Draggable<int>(
       data: request.number,
       dragAnchorStrategy: pointerDragAnchorStrategy,
-      feedback: Material(
-        type: MaterialType.transparency,
-        child: Opacity(
-          opacity: 0.9,
-          child: Transform.rotate(
-            angle: 0.02,
-            // Rendu dans l'`Overlay`, hors de l'arbre : aucune contrainte
-            // héritée, d'où la largeur explicite.
-            child: SizedBox(width: T.columnMinWidth - 24, child: card),
-          ),
-        ),
-      ),
-      childWhenDragging: Opacity(opacity: 0.35, child: card),
+      feedback: feedback,
+      childWhenDragging: ghost,
       child: card,
     );
   }
+
+  /// Vrai sur un appareil tactile, web compris : `defaultTargetPlatform`
+  /// rend `android` / `iOS` pour un navigateur mobile.
+  static bool get _touchPlatform => switch (defaultTargetPlatform) {
+    TargetPlatform.android ||
+    TargetPlatform.iOS ||
+    TargetPlatform.fuchsia => true,
+    _ => false,
+  };
 
   Widget _card() {
     final requester = store.personById(request.requesterId);

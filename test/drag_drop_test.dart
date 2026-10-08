@@ -5,6 +5,8 @@ import 'package:ardoise/models/models.dart';
 import 'package:ardoise/theme/app_theme.dart';
 import 'package:ardoise/widgets/board_view.dart';
 import 'package:ardoise/widgets/request_card.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart' show kLongPressTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -63,8 +65,10 @@ Future<void> _dragCardTo(
   final from = tester.getCenter(card);
   final to = tester.getCenter(_columnTitle(column));
   final gesture = await tester.startGesture(from);
-  // Franchir le seuil de démarrage (`kTouchSlop`) avant de viser la cible.
-  await tester.pump(const Duration(milliseconds: 100));
+  // En test `defaultTargetPlatform` vaut `android` : la carte est un
+  // `LongPressDraggable`, il faut donc tenir l'appui avant de bouger.
+  await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+  // Puis franchir le seuil de déplacement (`kTouchSlop`) avant de viser.
   await gesture.moveTo(Offset(from.dx, from.dy - 30));
   await tester.pump();
   await gesture.moveTo(to);
@@ -74,6 +78,37 @@ Future<void> _dragCardTo(
 }
 
 void main() {
+  testWidgets('au doigt, la carte ne se saisit qu’à l’appui long', (
+    tester,
+  ) async {
+    // Sans ça, un glissement sur une carte accapare le geste et le tableau
+    // devient impossible à faire défiler sur un téléphone — constaté sur un
+    // vrai appareil le 08/10.
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await _pump(tester);
+    expect(find.byType(LongPressDraggable<int>), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Draggable<int> && w is! LongPressDraggable<int>,
+      ),
+      findsNothing,
+    );
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('à la souris, le glissement est immédiat', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    await _pump(tester);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Draggable<int> && w is! LongPressDraggable<int>,
+      ),
+      findsWidgets,
+    );
+    expect(find.byType(LongPressDraggable<int>), findsNothing);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   const cardTitle = 'Crash à l’import depuis la galerie';
 
   testWidgets('glisser une carte vers « Fait » change son statut', (

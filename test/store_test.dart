@@ -6,10 +6,8 @@ import 'package:ardoise/theme/tokens.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Un instantané d'exemple : les deux projets et toutes leurs demandes.
-ArdoiseSnapshot _snapshot([List<Request>? requests]) => ArdoiseSnapshot(
-  projects: seedProjects,
-  requests: requests ?? seedRequests,
-);
+ArdoiseSnapshot _snapshot([List<Request>? requests]) =>
+    ArdoiseSnapshot(projects: seedProjects, requests: requests ?? seedRequests);
 
 /// Un store déjà chargé, calé sur octobre 2026 (le mois des données d'exemple).
 Future<ArdoiseStore> _store({MemoryRepository? repo, DateTime? today}) async {
@@ -34,6 +32,34 @@ void main() {
     final store = await _store(repo: MemoryRepository());
     expect(store.visibleRequests, hasLength(8)); // les 8 demandes d’octobre
   });
+
+  test(
+    'une panne de lecture est annoncée, pas confondue avec « rien »',
+    () async {
+      // Le 08/10, un canal de plateforme indisponible rendait `null` : l'app
+      // affichait les données d'exemple sans un mot, et la première écriture
+      // remplaçait le vrai travail. La panne doit se voir.
+      final panne = MemoryRepository(
+        ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
+      )..loadFailsWith = 'canal de plateforme indisponible';
+      final store = ArdoiseStore(
+        repository: panne,
+        today: DateTime(2026, 10, 8),
+      );
+      await store.init();
+      expect(store.loading, isFalse);
+      expect(store.saveError, contains('canal de plateforme indisponible'));
+
+      // Premier lancement ordinaire : rien d'enregistré n'est pas une panne.
+      final vierge = ArdoiseStore(
+        repository: MemoryRepository(),
+        today: DateTime(2026, 10, 8),
+      );
+      await vierge.init();
+      expect(vierge.saveError, isNull);
+      expect(vierge.visibleRequests, hasLength(8));
+    },
+  );
 
   test(
     'init : un dépôt qui lève ne fige pas l’app sur le chargement',

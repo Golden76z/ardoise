@@ -6,6 +6,12 @@ import 'data/store.dart';
 import 'theme/app_theme.dart';
 
 void main() {
+  // `init()` passe par un canal de plateforme (shared_preferences) : sans
+  // binding, il lève « Binding has not yet been initialized » et l'app repart
+  // des données d'exemple à chaque lancement. Invisible sur le web, où le
+  // plugin lit le localStorage sans canal — constaté sur Android le 08/10.
+  WidgetsFlutterBinding.ensureInitialized();
+
   final store = ArdoiseStore(repository: PrefsRepository());
   // Le chargement est asynchrone ; `BoardPage` affiche un indicateur tant que
   // `store.loading` est vrai.
