@@ -196,6 +196,79 @@ class ChoicePill extends StatelessWidget {
   }
 }
 
+/// La pastille de statut d'une demande. Partagée par la carte du tableau et
+/// la ligne de la vue Liste.
+class StatusPill extends StatelessWidget {
+  const StatusPill({super.key, required this.status});
+
+  final RequestStatus status;
+
+  @override
+  Widget build(BuildContext context) => InkOutline(
+    radius: T.rSmallChip + 1,
+    color: T.statusColor(status),
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    child: SizedBox(
+      height: 26 - 2 * T.borderWidth,
+      // Sans `widthFactor`, `Center` s'étire à toute la largeur sous les
+      // contraintes lâches d'un `Wrap`.
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          status.label,
+          style: TextStyles.bold800.copyWith(fontSize: T.fsTiny),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Le bouton de vote `▲ n`. Un seul exemplaire : c'est le seul endroit d'où
+/// part `toggleVote`, et il est partagé par la carte et la ligne de liste.
+class VoteButton extends StatelessWidget {
+  const VoteButton({
+    super.key,
+    required this.onToggle,
+    required this.votes,
+    required this.voted,
+    required this.title,
+  });
+
+  final VoidCallback onToggle;
+  final int votes;
+  final bool voted;
+
+  /// Sert au libellé d'accessibilité : « Voter pour `titre` ».
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: voted,
+    label: voted ? 'Retirer mon vote sur $title' : 'Voter pour $title',
+    child: InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(T.rSmallChip),
+      child: InkOutline(
+        radius: T.rSmallChip,
+        color: voted ? T.accentSoft : T.surface,
+        borderColor: voted ? T.ink : T.line,
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        child: SizedBox(
+          height: 28 - 2 * T.borderWidth,
+          child: Center(
+            widthFactor: 1,
+            child: Text(
+              '▲ $votes',
+              style: TextStyles.bold800.copyWith(color: T.accentInk),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// La pastille de comptage des colonnes et des puces.
 class CountBadge extends StatelessWidget {
   const CountBadge(this.count, {super.key});

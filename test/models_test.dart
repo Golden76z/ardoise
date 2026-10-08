@@ -7,6 +7,7 @@ Request _sample({
   Set<String> voters = const {'K', 'L'},
 }) => Request(
   number: 48,
+  projectId: 'echeo',
   title: 'Crash à l’import depuis la galerie',
   description: 'L’app plante sur Android 14.',
   type: RequestType.bug,
@@ -61,6 +62,34 @@ void main() {
     );
   });
 
+  test('une demande appartient à un projet, et le JSON le conserve', () {
+    final after = Request.fromJson(_sample().toJson());
+    expect(after.projectId, 'echeo');
+  });
+
+  test('une demande V1 sans projet est reprise dans Échéo', () {
+    final v1 = _sample().toJson()..remove('projectId');
+    expect(Request.fromJson(v1).projectId, 'echeo');
+  });
+
+  test('copyWith ne perd jamais le projet', () {
+    expect(_sample().copyWith(status: RequestStatus.done).projectId, 'echeo');
+  });
+
+  test('aller-retour JSON de l’instantané', () {
+    final before = ChantierSnapshot(
+      projects: seedProjects,
+      requests: seedRequests,
+    );
+    final after = ChantierSnapshot.fromJson(before.toJson());
+    expect(after.projects.map((p) => p.id), before.projects.map((p) => p.id));
+    expect(after.projects.first.color, before.projects.first.color);
+    expect(
+      after.requests.map((r) => r.number),
+      before.requests.map((r) => r.number),
+    );
+  });
+
   test('formats de date français', () {
     expect(formatShortDate(DateTime(2026, 10, 7)), '7 oct.');
     expect(formatShortDate(DateTime(2026, 9, 12)), '12 sept.');
@@ -75,7 +104,7 @@ void main() {
 
   test('les données d’exemple sont cohérentes', () {
     expect(seedPeople, hasLength(5));
-    expect(seedRequests, hasLength(13));
+    expect(seedRequests, hasLength(15)); // 13 d’Échéo + 2 de l’Atelier
     // Un vote par personne : jamais plus de votants que de personnes.
     for (final r in seedRequests) {
       expect(r.voterIds.length, lessThanOrEqualTo(seedPeople.length));
@@ -88,7 +117,18 @@ void main() {
       if (r.assigneeId != null) expect(ids, contains(r.assigneeId));
       expect(ids.containsAll(r.voterIds), isTrue);
     }
-    // Les numéros sont uniques.
-    expect(seedRequests.map((r) => r.number).toSet(), hasLength(13));
+    // Tout projet cité existe.
+    final projectIds = seedProjects.map((p) => p.id).toSet();
+    for (final r in seedRequests) {
+      expect(projectIds, contains(r.projectId));
+    }
+    // Les numéros sont uniques dans chaque projet (plus globalement).
+    for (final project in seedProjects) {
+      final numbers = seedRequests
+          .where((r) => r.projectId == project.id)
+          .map((r) => r.number)
+          .toList();
+      expect(numbers.toSet(), hasLength(numbers.length));
+    }
   });
 }

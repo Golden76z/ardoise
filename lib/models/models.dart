@@ -37,6 +37,23 @@ enum BoardGrouping {
   final String label;
 }
 
+enum ViewMode {
+  board('Tableau'),
+  list('Liste');
+
+  const ViewMode(this.label);
+  final String label;
+}
+
+enum ListSort {
+  recent('Plus récentes'),
+  votes('Plus votées'),
+  status('Par statut');
+
+  const ListSort(this.label);
+  final String label;
+}
+
 class Person {
   const Person({required this.id, required this.name, required this.color});
 
@@ -53,6 +70,7 @@ class Project {
     required this.key,
     required this.name,
     required this.milestoneName,
+    required this.color,
   });
 
   final String id;
@@ -64,11 +82,32 @@ class Project {
   /// Jalon courant, affiché dans le sous-titre. Pas d'affectation par
   /// demande en V1 : la progression porte sur tout le projet.
   final String milestoneName;
+
+  /// Pastille du projet dans le sélecteur, prise dans `T.projectPalette`.
+  final Color color;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'key': key,
+    'name': name,
+    'milestoneName': milestoneName,
+    // `Color.toARGB32()` : `value` est déprécié depuis Flutter 3.27.
+    'color': color.toARGB32(),
+  };
+
+  factory Project.fromJson(Map<String, Object?> json) => Project(
+    id: json['id']! as String,
+    key: json['key']! as String,
+    name: json['name']! as String,
+    milestoneName: json['milestoneName'] as String? ?? '',
+    color: Color(json['color']! as int),
+  );
 }
 
 class Request {
   const Request({
     required this.number,
+    required this.projectId,
     required this.title,
     required this.description,
     required this.type,
@@ -79,8 +118,12 @@ class Request {
     required this.voterIds,
   });
 
-  /// Identifie la demande ; la référence affichée en dérive.
+  /// Identifie la demande dans son projet ; la référence affichée en dérive.
   final int number;
+
+  /// Projet d'appartenance. La numérotation est propre à chaque projet :
+  /// `ECH-58` et `ATL-3` coexistent.
+  final String projectId;
   final String title;
   final String description;
   final RequestType type;
@@ -114,6 +157,7 @@ class Request {
     Set<String>? voterIds,
   }) => Request(
     number: number,
+    projectId: projectId,
     title: title ?? this.title,
     description: description ?? this.description,
     type: type ?? this.type,
@@ -126,6 +170,7 @@ class Request {
 
   Map<String, Object?> toJson() => {
     'number': number,
+    'projectId': projectId,
     'title': title,
     'description': description,
     'type': type.name,
@@ -140,6 +185,9 @@ class Request {
   /// rattrape et repart des données d'exemple.
   factory Request.fromJson(Map<String, Object?> json) => Request(
     number: json['number']! as int,
+    // Les demandes enregistrées en V1 n'ont pas de projet : elles sont
+    // toutes d'Échéo, seul projet qui existait alors.
+    projectId: json['projectId'] as String? ?? 'echeo',
     title: json['title']! as String,
     description: json['description']! as String,
     type: RequestType.values.byName(json['type']! as String),
@@ -149,6 +197,33 @@ class Request {
     createdAt: DateTime.parse(json['createdAt']! as String),
     voterIds: (json['voterIds']! as List).cast<String>().toSet(),
   );
+}
+
+/// Ce que la persistance échange en un bloc : les projets et leurs demandes.
+/// Les deux voyagent ensemble — une demande sans son projet n'a pas de sens.
+class ChantierSnapshot {
+  const ChantierSnapshot({required this.projects, required this.requests});
+
+  final List<Project> projects;
+  final List<Request> requests;
+
+  Map<String, Object?> toJson() => {
+    'projects': projects.map((p) => p.toJson()).toList(),
+    'requests': requests.map((r) => r.toJson()).toList(),
+  };
+
+  /// Lève sur un document mal formé ; `PrefsRepository` rattrape.
+  factory ChantierSnapshot.fromJson(Map<String, Object?> json) =>
+      ChantierSnapshot(
+        projects: (json['projects']! as List)
+            .cast<Map<String, Object?>>()
+            .map(Project.fromJson)
+            .toList(),
+        requests: (json['requests']! as List)
+            .cast<Map<String, Object?>>()
+            .map(Request.fromJson)
+            .toList(),
+      );
 }
 
 // — Dates en français. Deux formats suffisent : pas de dépendance à `intl`. —

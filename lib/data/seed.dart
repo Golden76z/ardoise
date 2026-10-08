@@ -1,11 +1,23 @@
 import '../models/models.dart';
 
-const seedProject = Project(
-  id: 'echeo',
-  key: 'ECH',
-  name: 'Échéo',
-  milestoneName: 'v0.4',
-);
+/// Le premier projet de la liste est celui sur lequel l'app s'ouvre.
+/// Un second projet d'exemple donne du sens au sélecteur dès le départ.
+const seedProjects = <Project>[
+  Project(
+    id: 'echeo',
+    key: 'ECH',
+    name: 'Échéo',
+    milestoneName: 'v0.4',
+    color: Color(0xFFDDF3EF),
+  ),
+  Project(
+    id: 'atelier',
+    key: 'ATL',
+    name: 'Atelier',
+    milestoneName: 'v0.1',
+    color: Color(0xFFFDE7D6),
+  ),
+];
 
 /// Utilisateur courant du prototype : Damien.
 const seedCurrentUserId = 'D';
@@ -22,6 +34,7 @@ const seedPeople = <Person>[
 List<Request> get seedRequests => [
   Request(
     number: 48,
+    projectId: 'echeo',
     title: 'Crash à l’import depuis la galerie',
     description: 'L’app plante sur Android 14 quand on importe des photos HEIC depuis la galerie.',
     type: RequestType.bug,
@@ -33,6 +46,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 51,
+    projectId: 'echeo',
     title: 'Export PDF multi-pages',
     description: 'Réunir plusieurs scans dans un seul PDF à partager.',
     type: RequestType.feature,
@@ -44,6 +58,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 53,
+    projectId: 'echeo',
     title: 'Dossiers intelligents par type',
     description:
         'Classer automatiquement factures, contrats et tickets de caisse.',
@@ -56,6 +71,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 42,
+    projectId: 'echeo',
     title: 'Recadrage automatique des bords',
     description: 'Détecter les 4 coins du document et corriger la perspective.',
     type: RequestType.feature,
@@ -67,6 +83,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 47,
+    projectId: 'echeo',
     title: 'OCR lent au-delà de 20 pages',
     description: 'Traiter les pages en parallèle pour accélérer l’OCR.',
     type: RequestType.bug,
@@ -78,6 +95,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 39,
+    projectId: 'echeo',
     title: 'Recherche plein texte dans les scans',
     description:
         'Indexer le texte OCR pour pouvoir chercher dans tous les documents.',
@@ -90,6 +108,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 35,
+    projectId: 'echeo',
     title: 'Mode sombre',
     description: 'Un thème sombre qui suit le réglage du système.',
     type: RequestType.feature,
@@ -101,6 +120,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 40,
+    projectId: 'echeo',
     title: 'Rotation perdue après sauvegarde',
     description: 'La rotation appliquée à une page n’est pas conservée.',
     type: RequestType.bug,
@@ -112,6 +132,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 30,
+    projectId: 'echeo',
     title: 'Onboarding en 3 écrans',
     description:
         'Présenter le scan, le classement et le partage au premier lancement.',
@@ -124,6 +145,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 31,
+    projectId: 'echeo',
     title: 'Plantage au démarrage sur iOS 17',
     description: 'Crash au lancement sur certains iPhone.',
     type: RequestType.bug,
@@ -135,6 +157,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 33,
+    projectId: 'echeo',
     title: 'Thème pastel personnalisable',
     description: 'Laisser choisir une couleur d’accent.',
     type: RequestType.idea,
@@ -146,6 +169,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 56,
+    projectId: 'echeo',
     title: 'Synchronisation iCloud',
     description: 'Retrouver ses documents sur tous ses appareils Apple.',
     type: RequestType.feature,
@@ -157,6 +181,7 @@ List<Request> get seedRequests => [
   ),
   Request(
     number: 57,
+    projectId: 'echeo',
     title: 'Widget écran d’accueil',
     description: 'Scanner en un tap depuis l’écran d’accueil.',
     type: RequestType.idea,
@@ -164,6 +189,31 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'T',
     createdAt: DateTime(2026, 11, 4),
+    voterIds: const {},
+  ),
+  // — Second projet : la numérotation repart à 1. —
+  Request(
+    number: 1,
+    projectId: 'atelier',
+    title: 'Choisir le bois',
+    description: 'Chêne ou frêne pour le plateau.',
+    type: RequestType.idea,
+    status: RequestStatus.todo,
+    requesterId: 'D',
+    assigneeId: 'D',
+    createdAt: DateTime(2026, 10, 3),
+    voterIds: const {'T'},
+  ),
+  Request(
+    number: 2,
+    projectId: 'atelier',
+    title: 'Établi bancal',
+    description: 'Le pied avant gauche ne touche plus le sol.',
+    type: RequestType.bug,
+    status: RequestStatus.doing,
+    requesterId: 'T',
+    assigneeId: 'D',
+    createdAt: DateTime(2026, 10, 6),
     voterIds: const {},
   ),
 ];

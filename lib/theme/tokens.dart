@@ -31,6 +31,17 @@ abstract final class T {
     Color(0xFFF8CFA2),
   ];
 
+  /// Couleurs proposées à la création d'un projet. Même famille que les
+  /// avatars, en plus désaturé — un projet n'est pas une personne.
+  static const projectPalette = <Color>[
+    Color(0xFFDDF3EF),
+    Color(0xFFFDE7D6),
+    Color(0xFFE8E3F5),
+    Color(0xFFDDEFD3),
+    Color(0xFFFCF1CC),
+    Color(0xFFF8D8E4),
+  ];
+
   static Color typeColor(RequestType type) => switch (type) {
     RequestType.bug => const Color(0xFFFDE1DC),
     RequestType.feature => const Color(0xFFFDE7D6),

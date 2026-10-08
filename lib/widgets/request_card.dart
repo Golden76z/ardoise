@@ -23,6 +23,31 @@ class RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final card = _card();
+    // Le demandeur est un fait, pas un état : rien à déplacer dans ce mode.
+    if (store.grouping == BoardGrouping.requester) return card;
+
+    return Draggable<int>(
+      data: request.number,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: Material(
+        type: MaterialType.transparency,
+        child: Opacity(
+          opacity: 0.9,
+          child: Transform.rotate(
+            angle: 0.02,
+            // Rendu dans l'`Overlay`, hors de l'arbre : aucune contrainte
+            // héritée, d'où la largeur explicite.
+            child: SizedBox(width: T.columnMinWidth - 24, child: card),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.35, child: card),
+      child: card,
+    );
+  }
+
+  Widget _card() {
     final requester = store.personById(request.requesterId);
     final assignee = store.personById(request.assigneeId);
     // Seul endroit de l'UI qui a besoin du groupement : une colonne de statut
@@ -47,7 +72,12 @@ class RequestCard extends StatelessWidget {
                   style: TextStyles.meta,
                 ),
               ),
-              _VoteButton(store: store, request: request),
+              VoteButton(
+                onToggle: () => store.toggleVote(request.number),
+                votes: request.votes,
+                voted: request.votedBy(store.currentUserId),
+                title: request.title,
+              ),
             ],
           ),
           const SizedBox(height: T.cardGap),
@@ -68,7 +98,7 @@ class RequestCard extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _RequesterPill(person: requester),
-              if (showStatus) _StatusPill(status: request.status),
+              if (showStatus) StatusPill(status: request.status),
               if (showAssignee)
                 Tooltip(
                   message: 'Intervenant : ${assignee?.name ?? 'Non assigné'}',
@@ -83,45 +113,6 @@ class RequestCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _VoteButton extends StatelessWidget {
-  const _VoteButton({required this.store, required this.request});
-
-  final ChantierStore store;
-  final Request request;
-
-  @override
-  Widget build(BuildContext context) {
-    final voted = request.votedBy(store.currentUserId);
-    return Semantics(
-      button: true,
-      selected: voted,
-      label: voted
-          ? 'Retirer mon vote sur ${request.title}'
-          : 'Voter pour ${request.title}',
-      child: InkWell(
-        onTap: () => store.toggleVote(request.number),
-        borderRadius: BorderRadius.circular(T.rSmallChip),
-        child: InkOutline(
-          radius: T.rSmallChip,
-          color: voted ? T.accentSoft : T.surface,
-          borderColor: voted ? T.ink : T.line,
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          child: SizedBox(
-            height: 28 - 2 * T.borderWidth,
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                '▲ ${request.votes}',
-                style: TextStyles.bold800.copyWith(color: T.accentInk),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -152,31 +143,6 @@ class _RequesterPill extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.status});
-
-  final RequestStatus status;
-
-  @override
-  Widget build(BuildContext context) => InkOutline(
-    radius: T.rSmallChip + 1,
-    color: T.statusColor(status),
-    padding: const EdgeInsets.symmetric(horizontal: 10),
-    child: SizedBox(
-      height: 26 - 2 * T.borderWidth,
-      // Sans `widthFactor`, `Center` s'étire à toute la largeur sous les
-      // contraintes lâches du `Wrap` du pied de carte.
-      child: Center(
-        widthFactor: 1,
-        child: Text(
-          status.label,
-          style: TextStyles.bold800.copyWith(fontSize: T.fsTiny),
-        ),
-      ),
     ),
   );
 }

@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'primitives.dart';
+import 'project_menu.dart';
 
 /// La barre de navigation en pilule flottante : logo, projet, onglets,
 /// sélecteur de mois, bouton de création.
@@ -40,25 +41,17 @@ class NavPill extends StatelessWidget {
               style: TextStyles.bold800.copyWith(color: T.bg, fontSize: 20),
             ),
           ),
-          InkOutline(
-            radius: T.rNavItem,
-            color: T.project,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: SizedBox(
-              height: 42 - 2 * T.borderWidth,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('${store.project.name} ▾', style: TextStyles.bold800),
-                ],
-              ),
+          ProjectMenu(store: store),
+          for (final mode in ViewMode.values)
+            _NavChip(
+              label: mode.label,
+              active: store.viewMode == mode,
+              onTap: () => store.setViewMode(mode),
             ),
-          ),
-          const _NavChip(label: 'Tableau', active: true),
-          // Vues Liste et Votes : hors périmètre V1 (handoff §4).
-          const _NavChip(label: 'Liste', active: false),
+          // La vue Votes reste inerte : hors périmètre (handoff §4).
           const _NavChip(label: 'Votes', active: false),
-          _MonthPicker(store: store),
+          // Le sélecteur de mois n'a aucun sens sur une vue qui les ignore.
+          if (store.viewMode == ViewMode.board) _MonthPicker(store: store),
           PillButton(label: '+ Demande', onPressed: onCreate),
         ],
       ),
@@ -67,16 +60,17 @@ class NavPill extends StatelessWidget {
 }
 
 class _NavChip extends StatelessWidget {
-  const _NavChip({required this.label, required this.active});
+  const _NavChip({required this.label, required this.active, this.onTap});
 
   final String label;
   final bool active;
 
+  /// `null` pour un onglet encore inerte : il n'est alors pas focusable.
+  final VoidCallback? onTap;
+
   @override
-  Widget build(BuildContext context) => Semantics(
-    selected: active,
-    // Non focusable : l'onglet n'est pas encore une vue (handoff §4).
-    child: Container(
+  Widget build(BuildContext context) {
+    final body = Container(
       height: 42,
       padding: EdgeInsets.symmetric(horizontal: active ? 14 : 12),
       decoration: BoxDecoration(
@@ -94,8 +88,20 @@ class _NavChip extends StatelessWidget {
           ),
         ],
       ),
-    ),
-  );
+    );
+
+    return Semantics(
+      button: onTap != null,
+      selected: active,
+      child: onTap == null
+          ? body
+          : InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(T.rNavItem),
+              child: body,
+            ),
+    );
+  }
 }
 
 /// Navigation de mois libre dans les deux sens, contrairement au prototype qui

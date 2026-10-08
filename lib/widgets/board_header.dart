@@ -8,65 +8,107 @@ import 'avatar.dart';
 import 'dashed.dart';
 import 'primitives.dart';
 
-/// Titre, sous-titre, segment « Colonnes », puces de type, et la barre des
-/// personnes en mode Intervenant / Demandeur.
+/// Titre, sous-titre, segment de choix, puces de type, et la barre des
+/// personnes en mode Intervenant / Demandeur. En vue Liste, le segment
+/// « Colonnes » et la barre des personnes cèdent la place au tri.
 class BoardHeader extends StatelessWidget {
   const BoardHeader({super.key, required this.store});
 
   final ChantierStore store;
 
+  /// Le sous-titre du tableau parle du mois affiché : il mentirait en liste.
+  String get _listSubtitle {
+    final count = store.listRequests.length;
+    return '$count demande${count > 1 ? 's' : ''} · tous les mois';
+  }
+
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Wrap(
-        spacing: 16,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(store.project.name, style: TextStyles.pageTitle),
-              const SizedBox(height: 6),
-              Text(store.subtitle, style: TextStyles.sub),
-            ],
-          ),
-          _GroupingSegment(store: store),
-          _TypeChips(store: store),
+  Widget build(BuildContext context) {
+    final list = store.viewMode == ViewMode.list;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 16,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(store.project.name, style: TextStyles.pageTitle),
+                const SizedBox(height: 6),
+                Text(
+                  list ? _listSubtitle : store.subtitle,
+                  style: TextStyles.sub,
+                ),
+              ],
+            ),
+            if (list)
+              _Segment<ListSort>(
+                label: 'Trier',
+                options: [
+                  for (final sort in ListSort.values) (sort, sort.label),
+                ],
+                value: store.listSort,
+                onSelect: store.setListSort,
+              )
+            else
+              _Segment<BoardGrouping>(
+                label: 'Colonnes',
+                options: [
+                  for (final grouping in BoardGrouping.values)
+                    (grouping, grouping.label),
+                ],
+                value: store.grouping,
+                onSelect: store.setGrouping,
+              ),
+            _TypeChips(store: store),
+          ],
+        ),
+        if (!list && store.grouping != BoardGrouping.status) ...[
+          const SizedBox(height: 18),
+          _PeopleBar(store: store),
         ],
-      ),
-      if (store.grouping != BoardGrouping.status) ...[
-        const SizedBox(height: 18),
-        _PeopleBar(store: store),
       ],
-    ],
-  );
+    );
+  }
 }
 
-class _GroupingSegment extends StatelessWidget {
-  const _GroupingSegment({required this.store});
+/// Le segment de choix : « Colonnes » en tableau, « Trier » en liste. Les deux
+/// ne diffèrent que par leurs options — un seul widget.
+class _Segment<V> extends StatelessWidget {
+  const _Segment({
+    required this.label,
+    required this.options,
+    required this.value,
+    required this.onSelect,
+  });
 
-  final ChantierStore store;
+  final String label;
+  final List<(V, String)> options;
+  final V value;
+  final void Function(V) onSelect;
 
   @override
   Widget build(BuildContext context) => InkOutline(
     radius: 22,
     color: T.surface,
     padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
+    // Un `Wrap` et non un `Row` : « Trier » et ses trois options dépassent la
+    // largeur d'une fenêtre étroite, et un dépassement se voit à l'écran.
+    child: Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        const Text('Colonnes', style: TextStyles.meta),
-        const SizedBox(width: 8),
-        for (final grouping in BoardGrouping.values)
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: _SegButton(
-              label: grouping.label,
-              selected: store.grouping == grouping,
-              onTap: () => store.setGrouping(grouping),
-            ),
+        Text(label, style: TextStyles.meta),
+        const SizedBox(width: 4),
+        for (final (option, optionLabel) in options)
+          _SegButton(
+            label: optionLabel,
+            selected: value == option,
+            onTap: () => onSelect(option),
           ),
       ],
     ),
@@ -98,12 +140,19 @@ class _SegButton extends StatelessWidget {
           color: selected ? T.accent : null,
           borderRadius: BorderRadius.circular(17),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyles.bold800.copyWith(
-            color: selected ? T.surface : T.ink,
-          ),
+        // Pas d'`alignment` : sous les contraintes lâches du `Wrap` parent, un
+        // `Container` aligné s'étire à toute la largeur et le segment se
+        // transforme en colonne.
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyles.bold800.copyWith(
+                color: selected ? T.surface : T.ink,
+              ),
+            ),
+          ],
         ),
       ),
     ),

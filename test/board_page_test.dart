@@ -21,7 +21,12 @@ Future<ChantierStore> _pump(
   addTearDown(tester.view.reset);
 
   final store = ChantierStore(
-    repository: MemoryRepository(requests ?? seedRequests),
+    repository: MemoryRepository(
+      ChantierSnapshot(
+        projects: seedProjects,
+        requests: requests ?? seedRequests,
+      ),
+    ),
     today: DateTime(2026, 10, 8),
   );
   await store.init();
@@ -188,7 +193,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    final repo = MemoryRepository(seedRequests)..failWith = 'disque plein';
+    final repo = MemoryRepository(
+      ChantierSnapshot(projects: seedProjects, requests: seedRequests),
+    )..failWith = 'disque plein';
     final store = ChantierStore(repository: repo, today: DateTime(2026, 10, 8));
     await store.init();
     await tester.pumpWidget(

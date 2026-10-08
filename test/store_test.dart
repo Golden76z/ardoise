@@ -2,12 +2,19 @@ import 'package:chantier/data/repository.dart';
 import 'package:chantier/data/seed.dart';
 import 'package:chantier/data/store.dart';
 import 'package:chantier/models/models.dart';
+import 'package:chantier/theme/tokens.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// Un instantané d'exemple : les deux projets et toutes leurs demandes.
+ChantierSnapshot _snapshot([List<Request>? requests]) => ChantierSnapshot(
+  projects: seedProjects,
+  requests: requests ?? seedRequests,
+);
 
 /// Un store déjà chargé, calé sur octobre 2026 (le mois des données d'exemple).
 Future<ChantierStore> _store({MemoryRepository? repo, DateTime? today}) async {
   final store = ChantierStore(
-    repository: repo ?? MemoryRepository(seedRequests),
+    repository: repo ?? MemoryRepository(_snapshot()),
     today: today ?? DateTime(2026, 10, 8),
   );
   await store.init();
@@ -16,7 +23,9 @@ Future<ChantierStore> _store({MemoryRepository? repo, DateTime? today}) async {
 
 void main() {
   test('init : les données du dépôt gagnent', () async {
-    final store = await _store(repo: MemoryRepository([seedRequests.first]));
+    final store = await _store(
+      repo: MemoryRepository(_snapshot([seedRequests.first])),
+    );
     expect(store.loading, isFalse);
     expect(store.visibleRequests, hasLength(1));
   });
@@ -29,7 +38,7 @@ void main() {
   test(
     'init : un dépôt qui lève ne fige pas l’app sur le chargement',
     () async {
-      final repo = MemoryRepository(seedRequests)
+      final repo = MemoryRepository(_snapshot())
         ..loadFailsWith = 'stockage inaccessible';
       final store = ChantierStore(
         repository: repo,
@@ -152,7 +161,7 @@ void main() {
   );
 
   test('mois vide : rien à afficher et pas de division par zéro', () async {
-    final store = await _store(repo: MemoryRepository(const []));
+    final store = await _store(repo: MemoryRepository(_snapshot(const [])));
     expect(store.visibleRequests, isEmpty);
     expect(store.countOfType(RequestType.bug), 0);
     expect(store.milestoneProgressPercent, 0);
@@ -257,18 +266,18 @@ void main() {
   });
 
   test('chaque mutation est enregistrée', () async {
-    final repo = MemoryRepository(seedRequests);
+    final repo = MemoryRepository(_snapshot());
     final store = await _store(repo: repo);
     store.setStatus(48, RequestStatus.done);
     await Future<void>.delayed(Duration.zero);
     expect(
-      repo.stored!.firstWhere((r) => r.number == 48).status,
+      repo.stored!.requests.firstWhere((r) => r.number == 48).status,
       RequestStatus.done,
     );
   });
 
   test('échec d’enregistrement : l’utilisateur est averti', () async {
-    final repo = MemoryRepository(seedRequests)..failWith = 'disque plein';
+    final repo = MemoryRepository(_snapshot())..failWith = 'disque plein';
     final store = await _store(repo: repo);
     expect(store.saveError, isNull);
     store.toggleVote(48);
@@ -309,5 +318,279 @@ void main() {
     expect(store.personById('D')?.name, 'Damien');
     expect(store.personById(null), isNull);
     expect(store.personById('ZZ'), isNull);
+  });
+
+  // — Projets —
+
+  test(
+    'le projet d’ouverture est le premier, et le tableau s’y restreint',
+    () async {
+      final store = await _store();
+      expect(store.projects, hasLength(2));
+      expect(store.project.id, 'echeo');
+      expect(store.visibleRequests, hasLength(8));
+      expect(
+        store.visibleRequests.every((r) => r.projectId == 'echeo'),
+        isTrue,
+      );
+    },
+  );
+
+  test('changer de projet change tout ce qui en dépend', () async {
+    final store = await _store();
+    store.setCurrentProject('atelier');
+    expect(store.project.name, 'Atelier');
+    expect(store.visibleRequests, hasLength(2));
+    expect(store.subtitle, startsWith('2 demandes en octobre'));
+    expect(store.countOfType(RequestType.bug), 1);
+    // Les colonnes suivent : « Choisir le bois » est à faire, l’établi en cours.
+    expect(store.columns[0].requests.map((r) => r.number), [1]);
+    expect(store.columns[1].requests.map((r) => r.number), [2]);
+  });
+
+  test('la numérotation est propre à chaque projet', () async {
+    final store = await _store();
+    expect(store.createRequest(title: 'A', type: RequestType.bug)!.number, 58);
+    store.setCurrentProject('atelier');
+    final created = store.createRequest(title: 'B', type: RequestType.bug)!;
+    expect(created.number, 3, reason: 'max(2) + 1, pas max(58) + 1');
+    expect(created.projectId, 'atelier');
+    expect(created.reference(store.project.key), 'ATL-3');
+  });
+
+  test('un projet vide : rien, 0 %, et la numérotation repart à 1', () async {
+    final store = await _store();
+    expect(
+      store.createProject(name: 'Vide', key: 'VID', color: T.project),
+      isNull,
+    );
+    store.setCurrentProject(store.projects.last.id);
+    expect(store.visibleRequests, isEmpty);
+    expect(store.milestoneProgressPercent, 0);
+    expect(store.subtitle, contains('0 demande'));
+    expect(store.columns, hasLength(4));
+    expect(
+      store.createRequest(title: 'Première', type: RequestType.idea)!.number,
+      1,
+    );
+  });
+
+  test(
+    'création de projet : clé vide, en doublon, ou trop longue → refusée',
+    () async {
+      final store = await _store();
+      expect(
+        store.createProject(name: 'X', key: '', color: T.project),
+        isNotNull,
+      );
+      expect(
+        store.createProject(name: 'X', key: '   ', color: T.project),
+        isNotNull,
+      );
+      expect(
+        store.createProject(name: 'X', key: 'TROPLONG', color: T.project),
+        isNotNull,
+      );
+      expect(
+        store.createProject(name: 'X', key: 'ECH', color: T.project),
+        isNotNull,
+      );
+      expect(
+        store.createProject(name: 'X', key: 'ech', color: T.project),
+        isNotNull,
+        reason: 'la casse ne doit pas créer un doublon déguisé',
+      );
+      expect(
+        store.createProject(name: '', key: 'ZZZ', color: T.project),
+        isNotNull,
+      );
+      expect(
+        store.projects,
+        hasLength(2),
+        reason: 'aucun refus n’a créé de projet',
+      );
+    },
+  );
+
+  test('création de projet : la clé est normalisée en majuscules', () async {
+    final store = await _store();
+    expect(
+      store.createProject(name: '  Bureau ', key: ' bur ', color: T.project),
+      isNull,
+    );
+    final created = store.projects.last;
+    expect(created.key, 'BUR');
+    expect(created.name, 'Bureau');
+  });
+
+  test(
+    'supprimer un projet emporte ses demandes et rebascule le courant',
+    () async {
+      final store = await _store();
+      expect(store.requestCountOf('atelier'), 2);
+      store.setCurrentProject('atelier');
+      expect(store.deleteProject('atelier'), isNull);
+      expect(store.projects.map((p) => p.id), ['echeo']);
+      expect(store.project.id, 'echeo', reason: 'jamais sans projet courant');
+      expect(store.requestCountOf('atelier'), 0);
+    },
+  );
+
+  test('supprimer le dernier projet est refusé', () async {
+    final store = await _store();
+    store.deleteProject('atelier');
+    expect(store.deleteProject('echeo'), isNotNull);
+    expect(store.projects, hasLength(1));
+  });
+
+  // — Vue Liste —
+
+  test(
+    'deux projets ont chacun leur n°1 : une écriture n’en touche qu’un',
+    () async {
+      final store = await _store();
+      // Atelier a déjà une demande n°1 (« Choisir le bois »).
+      expect(
+        store.createProject(name: 'Maison', key: 'MAI', color: T.project),
+        isNull,
+      );
+      store.setCurrentProject(store.projects.last.id);
+      final collision = store.createRequest(
+        title: 'Peindre le mur',
+        type: RequestType.idea,
+      )!;
+      expect(
+        collision.number,
+        1,
+        reason: 'la numérotation repart à 1 par projet',
+      );
+
+      // On agit sur la n°1 d’Atelier : celle de Maison ne doit pas bouger.
+      store.setCurrentProject('atelier');
+      store.setStatus(1, RequestStatus.done);
+      store.toggleVote(1);
+      store.setAssignee(1, 'K');
+
+      final atelier = store.requestByNumber(1)!;
+      expect(atelier.title, 'Choisir le bois');
+      expect(atelier.status, RequestStatus.done);
+      expect(atelier.assigneeId, 'K');
+
+      store.setCurrentProject(store.projects.last.id);
+      final maison = store.requestByNumber(1)!;
+      expect(maison.title, 'Peindre le mur');
+      expect(
+        maison.status,
+        RequestStatus.todo,
+        reason: 'écriture croisée entre projets',
+      );
+      expect(maison.votes, 0, reason: 'vote croisé entre projets');
+      expect(
+        maison.assigneeId,
+        isNull,
+        reason: 'réassignation croisée entre projets',
+      );
+    },
+  );
+
+  test('requestByNumber ne sort jamais du projet courant', () async {
+    final store = await _store();
+    expect(store.requestByNumber(1), isNull, reason: 'Échéo n’a pas de n°1');
+    store.setCurrentProject('atelier');
+    expect(store.requestByNumber(1)!.title, 'Choisir le bois');
+    expect(store.requestByNumber(48), isNull, reason: 'ECH-48 est dans Échéo');
+  });
+
+  test('un projet inconnu ne devient pas le projet courant', () async {
+    final store = await _store();
+    store.setCurrentProject('fantome');
+    expect(store.currentProjectId, 'echeo');
+    expect(store.deleteProject('fantome'), isNotNull);
+    expect(store.projects, hasLength(2));
+  });
+
+  test('un projet sans jalon n’affiche pas « Jalon » vide', () async {
+    final store = await _store();
+    store.createProject(name: 'Maison', key: 'MAI', color: T.project);
+    store.setCurrentProject(store.projects.last.id);
+    expect(store.subtitle, isNot(contains('Jalon')));
+    expect(store.subtitle, '0 demande en octobre · 0 %');
+    store.setCurrentProject('echeo');
+    expect(store.subtitle, contains('Jalon v0.4'));
+  });
+
+  test('vue Liste : tous mois confondus, triée, filtrée par type', () async {
+    final store = await _store();
+    expect(store.viewMode, ViewMode.board);
+    store.setViewMode(ViewMode.list);
+    // 13 demandes d’Échéo, tous mois : le filtre de mois ne s’applique pas.
+    expect(store.listRequests, hasLength(13));
+
+    expect(store.listSort, ListSort.recent);
+    final dates = store.listRequests.map((r) => r.createdAt).toList();
+    expect(
+      dates,
+      orderedEquals(List.of(dates)..sort((a, b) => b.compareTo(a))),
+    );
+
+    store.setListSort(ListSort.votes);
+    final votes = store.listRequests.map((r) => r.votes).toList();
+    expect(
+      votes,
+      orderedEquals(List.of(votes)..sort((a, b) => b.compareTo(a))),
+    );
+
+    store.setListSort(ListSort.status);
+    expect(store.listRequests.first.status, RequestStatus.todo);
+    expect(store.listRequests.last.status, RequestStatus.done);
+
+    store.toggleType(RequestType.bug);
+    expect(store.listRequests.any((r) => r.type == RequestType.bug), isFalse);
+  });
+
+  test(
+    'recherche : titre, description et référence, insensible à la casse',
+    () async {
+      final store = await _store();
+      store.setViewMode(ViewMode.list);
+
+      store.setSearchQuery('PDF');
+      expect(store.listRequests.map((r) => r.number), [51]);
+
+      store.setSearchQuery('heic'); // présent dans la description de ECH-48
+      expect(store.listRequests.map((r) => r.number), [48]);
+
+      store.setSearchQuery('ech-35');
+      expect(store.listRequests.map((r) => r.number), [35]);
+
+      store.setSearchQuery('  ');
+      expect(
+        store.listRequests,
+        hasLength(13),
+        reason: 'une requête blanche ne filtre rien',
+      );
+
+      store.setSearchQuery('zzzzz');
+      expect(store.listRequests, isEmpty);
+    },
+  );
+
+  test('la recherche ne déborde pas sur les autres projets', () async {
+    final store = await _store();
+    store.setViewMode(ViewMode.list);
+    store.setSearchQuery('bois');
+    expect(
+      store.listRequests,
+      isEmpty,
+      reason: '« Choisir le bois » est dans Atelier',
+    );
+    store.setCurrentProject('atelier');
+    expect(
+      store.searchQuery,
+      isEmpty,
+      reason: 'changer de projet remet la recherche à zéro',
+    );
+    store.setSearchQuery('bois');
+    expect(store.listRequests.map((r) => r.number), [1]);
   });
 }

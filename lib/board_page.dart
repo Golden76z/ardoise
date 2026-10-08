@@ -8,6 +8,7 @@ import 'widgets/board_header.dart';
 import 'widgets/board_view.dart';
 import 'widgets/create_dialog.dart';
 import 'widgets/detail_drawer.dart';
+import 'widgets/list_view.dart';
 import 'widgets/nav_pill.dart';
 import 'widgets/primitives.dart';
 
@@ -54,11 +55,18 @@ class BoardPage extends StatelessWidget {
                   ],
                   BoardHeader(store: store),
                   const SizedBox(height: 18),
-                  BoardView(
-                    store: store,
-                    onOpenRequest: (number) =>
-                        showRequestDetail(context, store, number),
-                  ),
+                  if (store.viewMode == ViewMode.board)
+                    BoardView(
+                      store: store,
+                      onOpenRequest: (number) =>
+                          showRequestDetail(context, store, number),
+                    )
+                  else
+                    RequestListView(
+                      store: store,
+                      onOpenRequest: (number) =>
+                          showRequestDetail(context, store, number),
+                    ),
                 ],
               ),
             ),
