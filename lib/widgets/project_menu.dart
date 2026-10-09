@@ -7,13 +7,16 @@ import '../data/store.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
+import 'avatar.dart';
 import 'dashed.dart';
 import 'primitives.dart';
 
 /// Ce que le menu rend à celui qui l'a ouvert. Choisir un projet est traité
 /// sur place ; créer et supprimer ouvrent une fenêtre, donc après la fermeture
 /// du menu — depuis un contexte encore monté.
-typedef _MenuChoice = ({bool create, String? deleteId});
+enum _MenuAction { createProject, deleteProject, people, clearAll }
+
+typedef _MenuChoice = ({_MenuAction action, String? projectId});
 
 /// Force la clé en majuscules pendant la frappe : `ech` et `ECH` sont la
 /// même clé, autant que ça se voie tout de suite.
@@ -82,10 +85,15 @@ class ProjectMenu extends StatelessWidget {
       pageBuilder: (_, _, _) => _Dropdown(store: store, anchor: anchor),
     );
     if (choice == null || !context.mounted) return;
-    if (choice.create) {
-      await showCreateProjectDialog(context, store);
-    } else if (choice.deleteId != null) {
-      await _showDeleteProjectDialog(context, store, choice.deleteId!);
+    switch (choice.action) {
+      case _MenuAction.createProject:
+        await showCreateProjectDialog(context, store);
+      case _MenuAction.deleteProject:
+        await _showDeleteProjectDialog(context, store, choice.projectId!);
+      case _MenuAction.people:
+        await showPeopleDialog(context, store);
+      case _MenuAction.clearAll:
+        await _showClearAllDialog(context, store);
     }
   }
 }
@@ -101,11 +109,13 @@ class _Dropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
+    // Sur un écran plus étroit que le menu, 340 px en dur le font déborder.
+    final width = math.min(_width, screenWidth - 16);
     return Stack(
       children: [
         Positioned(
           // Le menu ne doit pas sortir de l'écran quand la pilule est à droite.
-          left: math.max(8, math.min(anchor.dx, screenWidth - _width - 8)),
+          left: math.max(8, math.min(anchor.dx, screenWidth - width - 8)),
           top: anchor.dy,
           child: Material(
             type: MaterialType.transparency,
@@ -115,7 +125,7 @@ class _Dropdown extends StatelessWidget {
               shadow: T.panelShadow,
               padding: const EdgeInsets.all(8),
               child: SizedBox(
-                width: _width,
+                width: width,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,9 +139,10 @@ class _Dropdown extends StatelessWidget {
                           store.setCurrentProject(project.id);
                           Navigator.of(context).pop();
                         },
-                        onDelete: () =>
-                            Navigator.of(context)
-                                .pop((create: false, deleteId: project.id)),
+                        onDelete: () => Navigator.of(context).pop((
+                          action: _MenuAction.deleteProject,
+                          projectId: project.id,
+                        )),
                       ),
                     const SizedBox(height: 8),
                     const DashedDivider(),
@@ -139,9 +150,30 @@ class _Dropdown extends StatelessWidget {
                     PillButton(
                       label: 'Nouveau projet',
                       height: 40,
-                      onPressed: () =>
-                          Navigator.of(context)
-                              .pop((create: true, deleteId: null)),
+                      onPressed: () => Navigator.of(context).pop((
+                        action: _MenuAction.createProject,
+                        projectId: null,
+                      )),
+                    ),
+                    const SizedBox(height: 6),
+                    PillButton(
+                      label: 'Personnes',
+                      style: PillStyle.ghost,
+                      height: 40,
+                      onPressed: () => Navigator.of(context)
+                          .pop((action: _MenuAction.people, projectId: null)),
+                    ),
+                    const SizedBox(height: 8),
+                    const DashedDivider(),
+                    const SizedBox(height: 8),
+                    // Détruit tout : séparé du reste par un filet, et il
+                    // demande confirmation.
+                    PillButton(
+                      label: 'Tout effacer',
+                      style: PillStyle.ghost,
+                      height: 40,
+                      onPressed: () => Navigator.of(context)
+                          .pop((action: _MenuAction.clearAll, projectId: null)),
                     ),
                   ],
                 ),
@@ -521,4 +553,378 @@ class _DeleteProjectDialogState extends State<_DeleteProjectDialog> {
       ],
     );
   }
+}
+
+/// Le panneau des personnes : ajouter, renommer, retirer, et désigner qui
+/// vous êtes. Les identifiants ne bougent jamais — renommer est donc le bon
+/// geste pour remplacer une personne d'exemple sans détacher ses demandes.
+Future<void> showPeopleDialog(BuildContext context, ArdoiseStore store) =>
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Fermer',
+      barrierColor: T.backdrop,
+      transitionDuration: const Duration(milliseconds: 150),
+      pageBuilder: (_, _, _) =>
+          _PeopleDialog(key: const Key('people-dialog'), store: store),
+    );
+
+class _PeopleDialog extends StatefulWidget {
+  const _PeopleDialog({super.key, required this.store});
+
+  final ArdoiseStore store;
+
+  @override
+  State<_PeopleDialog> createState() => _PeopleDialogState();
+}
+
+class _PeopleDialogState extends State<_PeopleDialog> {
+  final _name = TextEditingController();
+
+  /// Identifiant de la personne en cours de renommage, `#` pour un ajout,
+  /// `null` quand on ne saisit rien.
+  String? _editing;
+  String? _refusal;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _startEdit(String id, String value) => setState(() {
+    _editing = id;
+    _refusal = null;
+    _name.text = value;
+    _name.selection = TextSelection.collapsed(offset: value.length);
+  });
+
+  void _cancel() => setState(() {
+    _editing = null;
+    _refusal = null;
+    _name.clear();
+  });
+
+  void _commit() {
+    final id = _editing;
+    if (id == null) return;
+    final refusal = id == '#'
+        ? widget.store.createPerson(name: _name.text)
+        : widget.store.renamePerson(id, _name.text);
+    setState(() {
+      _refusal = refusal;
+      if (refusal == null) {
+        _editing = null;
+        _name.clear();
+      }
+    });
+  }
+
+  void _delete(String id) =>
+      setState(() => _refusal = widget.store.deletePerson(id));
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.store,
+    builder: (context, _) => _DialogShell(
+      children: [
+        Text('Personnes', style: TextStyles.panelTitle),
+        const SizedBox(height: 6),
+        Text(
+          'Renommer garde les demandes : c’est le moyen de remplacer une '
+          'personne d’exemple sans rien détacher.',
+          style: TextStyles.sub,
+        ),
+        const SizedBox(height: 16),
+        for (final person in widget.store.people)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _editing == person.id
+                ? _NameField(
+                    controller: _name,
+                    onSubmit: _commit,
+                    onCancel: _cancel,
+                  )
+                : _PersonRow(
+                    person: person,
+                    isMe: person.id == widget.store.currentUserId,
+                    onSetMe: () => widget.store.setCurrentUser(person.id),
+                    onRename: () => _startEdit(person.id, person.name),
+                    onDelete: () => _delete(person.id),
+                  ),
+          ),
+        const SizedBox(height: 6),
+        if (_editing == '#')
+          _NameField(
+            controller: _name,
+            onSubmit: _commit,
+            onCancel: _cancel,
+            hint: 'Son prénom',
+          )
+        else
+          PillButton(
+            label: 'Nouvelle personne',
+            height: 40,
+            onPressed: () => _startEdit('#', ''),
+          ),
+        if (_refusal != null) _Refusal(_refusal!),
+        const SizedBox(height: 18),
+        Align(
+          alignment: Alignment.centerRight,
+          child: PillButton(
+            label: 'Fermer',
+            style: PillStyle.ghost,
+            height: 44,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PersonRow extends StatelessWidget {
+  const _PersonRow({
+    required this.person,
+    required this.isMe,
+    required this.onSetMe,
+    required this.onRename,
+    required this.onDelete,
+  });
+
+  final Person person;
+  final bool isMe;
+  final VoidCallback onSetMe;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final nom = Row(
+      children: [
+        PersonAvatar(person: person, size: 28),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            person.name,
+            style: TextStyles.body.copyWith(fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+    final actions = <Widget>[
+      if (isMe)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            'vous',
+            style: TextStyles.meta.copyWith(color: T.accentInk),
+          ),
+        )
+      else
+        _MiniButton(label: 'C’est moi', onTap: onSetMe),
+      _MiniButton(
+        glyph: '✎',
+        semanticLabel: 'Renommer ${person.name}',
+        onTap: onRename,
+      ),
+      _MiniButton(
+        glyph: '✕',
+        semanticLabel: 'Supprimer ${person.name}',
+        onTap: onDelete,
+      ),
+    ];
+
+    return InkOutline(
+      radius: T.rChip,
+      color: isMe ? T.accentSoft : T.surface,
+      borderColor: isMe ? T.ink : T.line,
+      padding: const EdgeInsets.all(6),
+      // Au large, tout sur une rangée. À l'étroit, le nom garde sa ligne et
+      // les actions passent dessous : à 280 px la rangée unique débordait de
+      // 81 px. Même motif que les lignes de la vue Liste.
+      child: LayoutBuilder(
+        builder: (context, constraints) => constraints.maxWidth >= 340
+            ? Row(
+                children: [
+                  Expanded(child: nom),
+                  for (final action in actions) ...[
+                    const SizedBox(width: 6),
+                    action,
+                  ],
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  nom,
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 6, runSpacing: 6, children: actions),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+/// Un bouton de rangée : soit un libellé, soit un glyphe décoratif doublé
+/// d'un nom accessible.
+class _MiniButton extends StatelessWidget {
+  const _MiniButton({
+    this.label,
+    this.glyph,
+    this.semanticLabel,
+    required this.onTap,
+  });
+
+  final String? label;
+  final String? glyph;
+  final String? semanticLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: semanticLabel,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: InkOutline(
+        radius: 16,
+        color: T.bg,
+        borderColor: T.line,
+        padding: EdgeInsets.symmetric(horizontal: glyph != null ? 9 : 11),
+        child: SizedBox(
+          height: 32 - 2 * T.borderWidth,
+          child: Center(
+            widthFactor: 1,
+            child: glyph != null
+                ? ExcludeSemantics(
+                    child: Text(glyph!, style: TextStyles.bold800),
+                  )
+                : Text(
+                    label!,
+                    style: TextStyles.meta.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Le champ de saisie d'un nom, partagé par l'ajout et le renommage.
+class _NameField extends StatelessWidget {
+  const _NameField({
+    required this.controller,
+    required this.onSubmit,
+    required this.onCancel,
+    this.hint,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback onSubmit;
+  final VoidCallback onCancel;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: TextField(
+          key: const Key('person-name'),
+          controller: controller,
+          autofocus: true,
+          onSubmitted: (_) => onSubmit(),
+          style: TextStyles.body.copyWith(fontSize: 16),
+          decoration: InputDecoration(
+            hintText: hint ?? 'Son prénom',
+            hintStyle: TextStyles.sub,
+            filled: true,
+            fillColor: T.bg,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: T.ink, width: T.borderWidth),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: T.ink, width: T.borderWidth),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: T.accent,
+                width: T.borderWidth,
+              ),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(width: 6),
+      _MiniButton(glyph: '✓', semanticLabel: 'Valider', onTap: onSubmit),
+      const SizedBox(width: 6),
+      _MiniButton(glyph: '✕', semanticLabel: 'Annuler', onTap: onCancel),
+    ],
+  );
+}
+
+/// Table rase : confirmation nommant ce qui part.
+Future<void> _showClearAllDialog(BuildContext context, ArdoiseStore store) {
+  final projets = store.projects.length;
+  final demandes = store.projects.fold<int>(
+    0,
+    (total, p) => total + store.requestCountOf(p.id),
+  );
+  final personnes = store.people.length;
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Annuler',
+    barrierColor: T.backdrop,
+    transitionDuration: const Duration(milliseconds: 150),
+    pageBuilder: (dialogContext, _, _) => _DialogShell(
+      children: [
+        Text('Tout effacer', style: TextStyles.panelTitle),
+        const SizedBox(height: 12),
+        Text(
+          '$projets projet${projets > 1 ? 's' : ''}, '
+          '$demandes demande${demandes > 1 ? 's' : ''} et '
+          '$personnes personne${personnes > 1 ? 's' : ''} seront supprimés. '
+          'Il restera un projet et une personne vides, à renommer. '
+          'C’est irréversible.',
+          style: TextStyles.description,
+        ),
+        const SizedBox(height: 22),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            PillButton(
+              label: 'Annuler',
+              style: PillStyle.ghost,
+              height: 44,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            const SizedBox(width: 8),
+            PillButton(
+              label: 'Tout effacer',
+              height: 44,
+              onPressed: () {
+                store.clearAll();
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }

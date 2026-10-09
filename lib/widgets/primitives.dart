@@ -111,12 +111,18 @@ class PillButton extends StatelessWidget {
         children: [
           // Quand un libellé accessible est fourni, le texte visible est
           // décoratif : sans ça le lecteur d'écran dit « Nouvelle demande, + ».
-          _maybeExclude(
-            exclude: semanticLabel != null,
-            child: Text(
-              label,
-              style: TextStyles.bold800.copyWith(
-                color: primary ? T.surface : T.ink,
+          // Abrégeable : un libellé long dans une pilule étroite débordait
+          // en dur. Même règle que les onglets de la barre de navigation.
+          Flexible(
+            child: _maybeExclude(
+              exclude: semanticLabel != null,
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyles.bold800.copyWith(
+                  color: primary ? T.surface : T.ink,
+                ),
               ),
             ),
           ),

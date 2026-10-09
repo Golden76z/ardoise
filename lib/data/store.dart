@@ -55,8 +55,14 @@ class ArdoiseStore extends ChangeNotifier {
   final ArdoiseRepository _repository;
   final DateTime Function() _now;
 
-  final List<Person> people = seedPeople;
-  final String currentUserId = seedCurrentUserId;
+  List<Person> _people = const [];
+  String _currentUserId = seedCurrentUserId;
+
+  List<Person> get people => List.unmodifiable(_people);
+
+  /// Qui je suis : le demandeur de toute demande que je crée, et le votant
+  /// que bascule chaque ▲.
+  String get currentUserId => _currentUserId;
 
   List<Project> _projects = const [];
   String _currentProjectId = '';
@@ -97,6 +103,8 @@ class ArdoiseStore extends ChangeNotifier {
     // ne doit pas laisser l'utilisateur devant un indicateur qui tourne.
     try {
       final snapshot = await _repository.load();
+      _people = snapshot?.people ?? seedPeople;
+      _currentUserId = snapshot?.currentUserId ?? seedCurrentUserId;
       final failure = _repository.lastLoadError;
       if (failure != null) {
         // Des données existent peut-être : le dire, sinon la première
@@ -105,16 +113,21 @@ class ArdoiseStore extends ChangeNotifier {
       }
       _projects = snapshot?.projects ?? seedProjects;
       _requests = snapshot?.requests ?? seedRequests;
-      if (_projects.isEmpty) {
-        // Un instantané sans projet rendrait `project` impossible à servir.
-        _projects = seedProjects;
-      }
+      // Sans projet ni personne, `project` et `currentUserId` n'ont rien à
+      // servir : on repart des données d'exemple plutôt que d'un écran mort.
+      if (_projects.isEmpty) _projects = seedProjects;
+      if (_people.isEmpty) _people = seedPeople;
     } on Object catch (error) {
       _projects = seedProjects;
       _requests = seedRequests;
+      _people = seedPeople;
+      _currentUserId = seedCurrentUserId;
       _saveError = 'Données locales illisibles ($error) : données d’exemple.';
     }
     _currentProjectId = _projects.first.id;
+    if (!_people.any((p) => p.id == _currentUserId)) {
+      _currentUserId = _people.first.id;
+    }
     _loading = false;
     notifyListeners();
   }
@@ -123,7 +136,7 @@ class ArdoiseStore extends ChangeNotifier {
 
   Person? personById(String? id) {
     if (id == null) return null;
-    for (final person in people) {
+    for (final person in _people) {
       if (person.id == id) return person;
     }
     return null;
@@ -202,7 +215,7 @@ class ArdoiseStore extends ChangeNotifier {
 
     final byRequester = _grouping == BoardGrouping.requester;
     return [
-      for (final person in people.where((p) => isPersonShown(p.id)))
+      for (final person in _people.where((p) => isPersonShown(p.id)))
         BoardColumn(
           title: person.name,
           person: person,
@@ -394,6 +407,132 @@ class ArdoiseStore extends ChangeNotifier {
     return request;
   }
 
+  // — Les personnes —
+  //
+  // Mêmes règles que les projets : on rend `null` quand c'est fait, sinon le
+  // motif du refus, à afficher. Un identifiant ne change jamais — c'est lui
+  // que portent les demandes.
+
+  String? createPerson({required String name}) {
+    final clean = name.trim();
+    final refus = _checkName(clean);
+    if (refus != null) return refus;
+
+    _people = [
+      ..._people,
+      Person(
+        id: 'p-${_now().microsecondsSinceEpoch}',
+        name: clean,
+        // On déroule la palette : deux voisins n'ont pas la même couleur.
+        color: T.personPalette[_people.length % T.personPalette.length],
+      ),
+    ];
+    _persist();
+    notifyListeners();
+    return null;
+  }
+
+  String? renamePerson(String id, String name) {
+    if (!_people.any((p) => p.id == id)) return 'Cette personne n’existe pas.';
+    final clean = name.trim();
+    final refus = _checkName(clean, exceptId: id);
+    if (refus != null) return refus;
+
+    _people = [
+      for (final person in _people)
+        if (person.id == id) person.copyWith(name: clean) else person,
+    ];
+    _persist();
+    notifyListeners();
+    return null;
+  }
+
+  /// Refusé quand la personne est **demandeuse** : une demande sans demandeur
+  /// n'a pas de sens. Sinon elle est détachée des intervenants et des votes,
+  /// puis supprimée.
+  String? deletePerson(String id) {
+    if (!_people.any((p) => p.id == id)) return 'Cette personne n’existe pas.';
+    if (id == _currentUserId) {
+      return 'Vous ne pouvez pas vous supprimer. Désignez d’abord quelqu’un '
+          'd’autre comme vous.';
+    }
+    if (_people.length <= 1) {
+      return 'Impossible de supprimer la dernière personne.';
+    }
+
+    final demandes = _requests.where((r) => r.requesterId == id).length;
+    if (demandes > 0) {
+      final pluriel = demandes > 1 ? 's' : '';
+      return '$demandes demande$pluriel ${demandes > 1 ? 'ont' : 'a'} été '
+          'faite$pluriel par cette personne. Réattribuez-les ou supprimez-les '
+          'avant de la retirer.';
+    }
+
+    _requests = [
+      for (final request in _requests)
+        if (request.assigneeId == id || request.voterIds.contains(id))
+          request.copyWith(
+            clearAssignee: request.assigneeId == id,
+            voterIds: {...request.voterIds}..remove(id),
+          )
+        else
+          request,
+    ];
+    _people = _people.where((p) => p.id != id).toList();
+    _hiddenPersonIds.remove(id);
+    _persist();
+    notifyListeners();
+    return null;
+  }
+
+  void setCurrentUser(String id) {
+    // Un id inconnu laisserait les nouvelles demandes sans demandeur valide.
+    if (!_people.any((p) => p.id == id)) return;
+    if (_currentUserId == id) return;
+    _currentUserId = id;
+    _persist();
+    notifyListeners();
+  }
+
+  /// Table rase. Laisse **un** projet et **une** personne, tous deux
+  /// renommables : sans eux, il n'y a plus ni projet courant ni demandeur, et
+  /// l'app n'a rien à afficher.
+  void clearAll() {
+    _people = [
+      Person(
+        id: 'p-${_now().microsecondsSinceEpoch}',
+        name: 'Moi',
+        color: T.personPalette.first,
+      ),
+    ];
+    _currentUserId = _people.first.id;
+    _projects = [
+      Project(
+        id: 'projet-${_now().microsecondsSinceEpoch}',
+        key: 'PRJ',
+        name: 'Mon projet',
+        milestoneName: '',
+        color: T.projectPalette.first,
+      ),
+    ];
+    _currentProjectId = _projects.first.id;
+    _requests = const [];
+    _hiddenPersonIds.clear();
+    _searchQuery = '';
+    _persist();
+    notifyListeners();
+  }
+
+  /// Un nom vide n'identifie personne, et deux homonymes rendent les colonnes
+  /// « Intervenant » et « Demandeur » illisibles.
+  String? _checkName(String clean, {String? exceptId}) {
+    if (clean.isEmpty) return 'Le nom est obligatoire.';
+    final collision = _people.any(
+      (p) => p.id != exceptId && p.name.toLowerCase() == clean.toLowerCase(),
+    );
+    return collision ? 'Quelqu’un porte déjà ce nom.' : null;
+  }
+
   void dismissSaveError() {
     _saveError = null;
     notifyListeners();
@@ -424,7 +563,14 @@ class ArdoiseStore extends ChangeNotifier {
 
   void _persist() {
     _repository
-        .save(ArdoiseSnapshot(projects: _projects, requests: _requests))
+        .save(
+          ArdoiseSnapshot(
+            projects: _projects,
+            requests: _requests,
+            people: _people,
+            currentUserId: _currentUserId,
+          ),
+        )
         .then(
           (_) {
             if (_saveError == null) return;

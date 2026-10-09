@@ -77,6 +77,162 @@ void main() {
     },
   );
 
+  test('les personnes sont persistées et relues', () async {
+    final repo = MemoryRepository(
+      ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
+    );
+    final store = await _store(repo: repo);
+    expect(store.people, hasLength(5), reason: 'données d’exemple au départ');
+
+    expect(store.createPerson(name: '  Zoé  '), isNull);
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.stored!.people!.map((p) => p.name), contains('Zoé'));
+    expect(repo.stored!.currentUserId, store.currentUserId);
+  });
+
+  test(
+    'un document sans personnes retombe sur les données d’exemple',
+    () async {
+      // Forme écrite avant que les personnes soient gérées : pas de migration,
+      // seulement des champs absents.
+      final store = await _store(
+        repo: MemoryRepository(
+          ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
+        ),
+      );
+      expect(store.people.map((p) => p.id), ['D', 'T', 'I', 'L', 'K']);
+      expect(store.currentUserId, 'D');
+    },
+  );
+
+  test('création : nom vide ou en doublon refusé, nom nettoyé', () async {
+    final store = await _store();
+    expect(store.createPerson(name: ''), isNotNull);
+    expect(store.createPerson(name: '   '), isNotNull);
+    expect(store.createPerson(name: 'Damien'), isNotNull);
+    expect(
+      store.createPerson(name: 'damien'),
+      isNotNull,
+      reason: 'la casse ne doit pas créer un doublon déguisé',
+    );
+    expect(store.people, hasLength(5));
+
+    expect(store.createPerson(name: '  Zoé  '), isNull);
+    expect(store.people.last.name, 'Zoé');
+    expect(store.people.last.initial, 'Z');
+    expect(store.personById(store.people.last.id), isNotNull);
+  });
+
+  test('renommer : même garde-fous, et les demandes suivent', () async {
+    final store = await _store();
+    expect(store.renamePerson('T', ''), isNotNull);
+    expect(store.renamePerson('T', 'Damien'), isNotNull, reason: 'doublon');
+    expect(store.renamePerson('inconnu', 'X'), isNotNull);
+
+    expect(store.renamePerson('T', 'Thomas'), isNull);
+    expect(store.personById('T')!.name, 'Thomas');
+    // L'identifiant ne bouge pas : les demandes restent reliées.
+    expect(store.requestByNumber(51)!.assigneeId, 'T');
+  });
+
+  test('supprimer : refusé si la personne est demandeuse', () async {
+    final store = await _store();
+    // Léa a demandé ECH-48, ECH-39, ECH-30 et ECH-57.
+    final refus = store.deletePerson('L');
+    expect(refus, isNotNull);
+    expect(refus, contains('4'), reason: 'dire combien de demandes bloquent');
+    expect(store.people, hasLength(5));
+  });
+
+  test('supprimer : refusé si c’est vous', () async {
+    final store = await _store();
+    expect(store.deletePerson(store.currentUserId), isNotNull);
+    expect(store.people, hasLength(5));
+  });
+
+  test(
+    'supprimer : détache l’intervenant et les votes, puis supprime',
+    () async {
+      final store = await _store();
+      // On crée quelqu'un qui n'a demandé aucune demande, puis on l'implique.
+      expect(store.createPerson(name: 'Zoé'), isNull);
+      final zoe = store.people.last.id;
+      store.setAssignee(48, zoe);
+      expect(store.requestByNumber(48)!.assigneeId, zoe);
+
+      expect(store.deletePerson(zoe), isNull);
+      expect(store.people.map((p) => p.id), isNot(contains(zoe)));
+      expect(store.requestByNumber(48)!.assigneeId, isNull, reason: 'détaché');
+      expect(
+        store.visibleRequests.every((r) => !r.voterIds.contains(zoe)),
+        isTrue,
+        reason: 'retiré des votes',
+      );
+    },
+  );
+
+  test('supprimer : refusé si c’est la dernière personne', () async {
+    final store = await _store(
+      repo: MemoryRepository(
+        const ArdoiseSnapshot(
+          projects: seedProjects,
+          requests: [],
+          people: [Person(id: 'X', name: 'Seule', color: Color(0xFFEFC4A6))],
+          currentUserId: 'X',
+        ),
+      ),
+    );
+    expect(store.people, hasLength(1));
+    expect(store.deletePerson('X'), isNotNull);
+  });
+
+  test('désigner qui je suis, et ça persiste', () async {
+    final repo = MemoryRepository(
+      ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
+    );
+    final store = await _store(repo: repo);
+    expect(store.currentUserId, 'D');
+
+    store.setCurrentUser('inconnu');
+    expect(store.currentUserId, 'D', reason: 'un id inconnu ne passe pas');
+
+    store.setCurrentUser('I');
+    expect(store.currentUserId, 'I');
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.stored!.currentUserId, 'I');
+    // Les nouvelles demandes sont désormais à son nom.
+    expect(
+      store.createRequest(title: 'À moi', type: RequestType.bug)!.requesterId,
+      'I',
+    );
+  });
+
+  test('tout effacer laisse une ardoise utilisable, pas vide', () async {
+    final repo = MemoryRepository(
+      ArdoiseSnapshot(projects: seedProjects, requests: seedRequests),
+    );
+    final store = await _store(repo: repo);
+    store.clearAll();
+
+    expect(store.projects, hasLength(1), reason: 'jamais sans projet courant');
+    expect(store.people, hasLength(1), reason: 'jamais sans utilisateur');
+    expect(store.currentUserId, store.people.first.id);
+    expect(store.currentProjectId, store.projects.first.id);
+    expect(store.visibleRequests, isEmpty);
+    expect(store.listRequests, isEmpty);
+    expect(store.milestoneProgressPercent, 0);
+    await Future<void>.delayed(Duration.zero);
+    expect(repo.stored!.requests, isEmpty);
+    expect(repo.stored!.people, hasLength(1));
+
+    // Tout est renommable : rien n'est figé, et la numérotation repart à 1.
+    expect(store.renamePerson(store.people.first.id, 'Damien'), isNull);
+    expect(
+      store.createRequest(title: 'Première', type: RequestType.idea)!.number,
+      1,
+    );
+  });
+
   test('colonnes par statut : les 4 statuts, cartes au bon endroit', () async {
     final store = await _store();
     expect(store.grouping, BoardGrouping.status);

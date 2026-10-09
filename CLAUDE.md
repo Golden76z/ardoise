@@ -90,6 +90,12 @@ flutter run -d chrome
    décoratif — `ExcludeSemantics`, sinon le lecteur annonce « Nouvelle
    demande, + ».
 
+10. **Tout libellé dans une pilule est abrégeable.** `PillButton` et
+    `_NavChip` mettent leur `Text` en `Flexible` + `maxLines: 1` + ellipsis.
+    Sans ça, « Nouvelle personne » dans un menu étroit déborde en dur. Idem
+    pour les largeurs figées : un panneau de 340 px sur un écran de 280 doit
+    se borner à la largeur disponible.
+
 ## Responsive
 
 Un seul point de rupture : `T.phoneBreakpoint` (600 px), lu par

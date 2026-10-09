@@ -62,6 +62,22 @@ class Person {
   final Color color;
 
   String get initial => name.substring(0, 1).toUpperCase();
+
+  Person copyWith({String? name, Color? color}) =>
+      Person(id: id, name: name ?? this.name, color: color ?? this.color);
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    // `Color.toARGB32()` : `value` est déprécié depuis Flutter 3.27.
+    'color': color.toARGB32(),
+  };
+
+  factory Person.fromJson(Map<String, Object?> json) => Person(
+    id: json['id']! as String,
+    name: json['name']! as String,
+    color: Color(json['color']! as int),
+  );
 }
 
 class Project {
@@ -202,14 +218,27 @@ class Request {
 /// Ce que la persistance échange en un bloc : les projets et leurs demandes.
 /// Les deux voyagent ensemble — une demande sans son projet n'a pas de sens.
 class ArdoiseSnapshot {
-  const ArdoiseSnapshot({required this.projects, required this.requests});
+  const ArdoiseSnapshot({
+    required this.projects,
+    required this.requests,
+    this.people,
+    this.currentUserId,
+  });
 
   final List<Project> projects;
   final List<Request> requests;
 
+  /// `null` dans un document écrit avant que les personnes soient gérées :
+  /// l'appelant retombe alors sur les données d'exemple. Pas de changement de
+  /// clé, donc pas de migration — seulement des champs tolérés absents.
+  final List<Person>? people;
+  final String? currentUserId;
+
   Map<String, Object?> toJson() => {
     'projects': projects.map((p) => p.toJson()).toList(),
     'requests': requests.map((r) => r.toJson()).toList(),
+    'people': people?.map((p) => p.toJson()).toList(),
+    'currentUserId': currentUserId,
   };
 
   /// Lève sur un document mal formé ; `PrefsRepository` rattrape.
@@ -223,6 +252,11 @@ class ArdoiseSnapshot {
             .cast<Map<String, Object?>>()
             .map(Request.fromJson)
             .toList(),
+        people: (json['people'] as List?)
+            ?.cast<Map<String, Object?>>()
+            .map(Person.fromJson)
+            .toList(),
+        currentUserId: json['currentUserId'] as String?,
       );
 }
 
