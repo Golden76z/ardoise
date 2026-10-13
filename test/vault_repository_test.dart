@@ -31,13 +31,13 @@ void main() {
 
   tearDown(() => vault.delete(recursive: true));
 
-  test('vault neuf : le projet BDD est créé, et rien d’autre n’est touché',
+  test('vault neuf : un projet de départ est créé, et rien d’autre n’est touché',
       () async {
     final snapshot = await repo().load();
-    expect(snapshot!.projects.single.key, 'BDD');
+    expect(snapshot!.projects.single.key, 'PRJ');
     expect(snapshot.requests, isEmpty);
-    expect(await note('Ardoise/BDD/BDD.md').exists(), isTrue);
-    expect(await note('Ardoise/Personnes/Damien.md').exists(), isTrue);
+    expect(await note('Ardoise/PRJ/PRJ.md').exists(), isTrue);
+    expect(await note('Ardoise/Personnes/Moi.md').exists(), isTrue);
     expect(await note('Journal.md').readAsString(), 'À moi.');
   });
 
@@ -47,7 +47,7 @@ void main() {
     await first.save(_seed());
     expect(await note('Ardoise/ECH/ECH-48.md').exists(), isTrue);
     // Le projet de départ n'est plus dans l'état : sa note part avec lui.
-    expect(await note('Ardoise/BDD/BDD.md').exists(), isFalse);
+    expect(await note('Ardoise/PRJ/PRJ.md').exists(), isFalse);
 
     final back = await repo().load();
     expect(back!.projects.map((p) => p.key), ['ECH', 'ATL']);
@@ -119,16 +119,16 @@ void main() {
   test('une demande créée dans Obsidian est numérotée et renommée', () async {
     final app = repo();
     await app.load();
-    await note('Ardoise/BDD/Import des notes.md').writeAsString(
+    await note('Ardoise/PRJ/Import des notes.md').writeAsString(
       '---\nardoise: demande\ntype: idée\n---\nDepuis Pronote.\n',
     );
     final snapshot = await app.load();
     final created = snapshot!.requests.single;
     expect(created.number, 1);
     expect(created.title, 'Import des notes');
-    expect(await note('Ardoise/BDD/Import des notes.md').exists(), isFalse);
+    expect(await note('Ardoise/PRJ/Import des notes.md').exists(), isFalse);
     expect(
-      await note('Ardoise/BDD/BDD-1.md').readAsString(),
+      await note('Ardoise/PRJ/PRJ-1.md').readAsString(),
       contains('Depuis Pronote.'),
     );
     // Relire ne crée pas de seconde copie.

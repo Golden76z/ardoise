@@ -76,7 +76,7 @@ void main() {
     expect(find.byType(MonthPicker), findsOneWidget, reason: 'dans l’en-tête');
     // Les éléments de la nav tiennent sur une seule ligne.
     final navItems = <Finder>[
-      find.descendant(of: find.byType(NavPill), matching: find.text('Échéo ▾')),
+      find.descendant(of: find.byType(NavPill), matching: find.text('Écho ▾')),
       find.descendant(of: find.byType(NavPill), matching: find.text('Tableau')),
       find.descendant(of: find.byType(NavPill), matching: find.text('Liste')),
     ];
@@ -131,10 +131,10 @@ void main() {
 
   testWidgets('le titre du projet rétrécit au téléphone', (tester) async {
     await _pumpAt(tester, 1440);
-    final large = tester.widget<Text>(find.text('Échéo')).style!.fontSize;
+    final large = tester.widget<Text>(find.text('Écho')).style!.fontSize;
 
     await _pumpAt(tester, 412);
-    final etroit = tester.widget<Text>(find.text('Échéo')).style!.fontSize;
+    final etroit = tester.widget<Text>(find.text('Écho')).style!.fontSize;
 
     expect(etroit, lessThan(large!));
     expect(etroit, 32);

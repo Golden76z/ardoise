@@ -4,7 +4,8 @@ Gestionnaire de demandes (bugs / fonctionnalités / idées) multi-projets.
 **Appli de bureau d'abord (Linux, Windows)**, sans backend : sur le bureau, les
 demandes vivent dans le **vault Obsidian** de l'utilisateur, une note par
 demande. Le web et Android restent possibles, sur les préférences locales.
-Le premier projet suivi est la **BDD du campus** (clé `BDD`).
+Un vault de démonstration (données fictives) est dans `exemple/vault-demo` ;
+`test/demo_vault_test.dart` garantit qu'il reste lisible.
 
 - `docs/handoff.md` — le périmètre et le modèle de données d'origine.
 - `docs/prototype.html` — la **référence visuelle et comportementale**. En cas
@@ -39,9 +40,9 @@ web. **`dart:io` n'apparaît que dans `vault_repository.dart` et
 
 ```text
 <vault>/Ardoise/Ardoise.md            index : `utilisateur` (qui je suis)
-<vault>/Ardoise/Personnes/Damien.md   une note par personne
-<vault>/Ardoise/BDD/BDD.md            note du projet ; corps libre
-<vault>/Ardoise/BDD/BDD-12.md         une demande ; corps = description
+<vault>/Ardoise/Personnes/Camille.md  une note par personne
+<vault>/Ardoise/WEB/WEB.md            note du projet ; corps libre
+<vault>/Ardoise/WEB/WEB-12.md         une demande ; corps = description
 ```
 
 Propriétés d'une demande : `ardoise: demande`, `numero`, `titre`, `type`

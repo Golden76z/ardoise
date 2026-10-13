@@ -57,7 +57,7 @@ void main() {
     expect(after.projectId, 'echeo');
   });
 
-  test('une demande V1 sans projet est reprise dans Échéo', () {
+  test('une demande V1 sans projet est reprise dans Écho', () {
     final v1 = _sample().toJson()..remove('projectId');
     expect(Request.fromJson(v1).projectId, 'echeo');
   });
@@ -94,7 +94,7 @@ void main() {
 
   test('les données d’exemple sont cohérentes', () {
     expect(seedPeople, hasLength(5));
-    expect(seedRequests, hasLength(15)); // 13 d’Échéo + 2 de l’Atelier
+    expect(seedRequests, hasLength(15)); // 13 d’Écho + 2 de l’Atelier
     // Tout identifiant cité existe.
     final ids = seedPeople.map((p) => p.id).toSet();
     for (final r in seedRequests) {

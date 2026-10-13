@@ -109,7 +109,7 @@ void main() {
     final store = await _store();
     expect(store.createPerson(name: ''), isNotNull);
     expect(store.createPerson(name: '   '), isNotNull);
-    expect(store.createPerson(name: 'Damien'), isNotNull);
+    expect(store.createPerson(name: 'Dana'), isNotNull);
     expect(
       store.createPerson(name: 'damien'),
       isNotNull,
@@ -126,7 +126,7 @@ void main() {
   test('renommer : même garde-fous, et les demandes suivent', () async {
     final store = await _store();
     expect(store.renamePerson('T', ''), isNotNull);
-    expect(store.renamePerson('T', 'Damien'), isNotNull, reason: 'doublon');
+    expect(store.renamePerson('T', 'Dana'), isNotNull, reason: 'doublon');
     expect(store.renamePerson('inconnu', 'X'), isNotNull);
 
     expect(store.renamePerson('T', 'Thomas'), isNull);
@@ -221,7 +221,7 @@ void main() {
     expect(repo.stored!.people, hasLength(1));
 
     // Tout est renommable : rien n'est figé, et la numérotation repart à 1.
-    expect(store.renamePerson(store.people.first.id, 'Damien'), isNull);
+    expect(store.renamePerson(store.people.first.id, 'Dana'), isNull);
     expect(
       store.createRequest(title: 'Première', type: RequestType.idea)!.number,
       1,
@@ -252,7 +252,7 @@ void main() {
       final store = await _store();
       store.setGrouping(BoardGrouping.assignee);
       expect(store.columns.map((c) => c.title), [
-        'Damien',
+        'Dana',
         'Tom',
         'Inès',
         'Léa',
@@ -274,7 +274,7 @@ void main() {
     final store = await _store();
     store.setGrouping(BoardGrouping.requester);
     expect(store.columns.map((c) => c.title), [
-      'Damien',
+      'Dana',
       'Tom',
       'Inès',
       'Léa',
@@ -291,10 +291,10 @@ void main() {
       final before = store.visibleRequests.length;
       store.togglePerson('D');
       expect(store.isPersonShown('D'), isFalse);
-      expect(store.columns.map((c) => c.title), isNot(contains('Damien')));
+      expect(store.columns.map((c) => c.title), isNot(contains('Dana')));
       expect(store.visibleRequests, hasLength(before));
       store.togglePerson('D');
-      expect(store.columns.map((c) => c.title), contains('Damien'));
+      expect(store.columns.map((c) => c.title), contains('Dana'));
     },
   );
 
@@ -502,7 +502,7 @@ void main() {
 
   test('personById : identifiant inconnu ou nul → null', () async {
     final store = await _store();
-    expect(store.personById('D')?.name, 'Damien');
+    expect(store.personById('D')?.name, 'Dana');
     expect(store.personById(null), isNull);
     expect(store.personById('ZZ'), isNull);
   });
@@ -686,10 +686,10 @@ void main() {
 
   test('requestByNumber ne sort jamais du projet courant', () async {
     final store = await _store();
-    expect(store.requestByNumber(1), isNull, reason: 'Échéo n’a pas de n°1');
+    expect(store.requestByNumber(1), isNull, reason: 'Écho n’a pas de n°1');
     store.setCurrentProject('atelier');
     expect(store.requestByNumber(1)!.title, 'Choisir le bois');
-    expect(store.requestByNumber(48), isNull, reason: 'ECH-48 est dans Échéo');
+    expect(store.requestByNumber(48), isNull, reason: 'ECH-48 est dans Écho');
   });
 
   test('un projet inconnu ne devient pas le projet courant', () async {
@@ -714,7 +714,7 @@ void main() {
     final store = await _store();
     expect(store.viewMode, ViewMode.board);
     store.setViewMode(ViewMode.list);
-    // 13 demandes d’Échéo, tous mois : le filtre de mois ne s’applique pas.
+    // 13 demandes d’Écho, tous mois : le filtre de mois ne s’applique pas.
     expect(store.listRequests, hasLength(13));
 
     expect(store.listSort, ListSort.recent);

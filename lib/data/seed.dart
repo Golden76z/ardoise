@@ -7,7 +7,7 @@ const seedProjects = <Project>[
   Project(
     id: 'echeo',
     key: 'ECH',
-    name: 'Échéo',
+    name: 'Écho',
     milestoneName: 'v0.4',
     color: Color(0xFFDDF3EF),
   ),
@@ -20,11 +20,11 @@ const seedProjects = <Project>[
   ),
 ];
 
-/// Utilisateur courant du prototype : Damien.
+/// Utilisateur courant des données d'exemple.
 const seedCurrentUserId = 'D';
 
 const seedPeople = <Person>[
-  Person(id: 'D', name: 'Damien', color: Color(0xFFEFC4A6)),
+  Person(id: 'D', name: 'Dana', color: Color(0xFFEFC4A6)),
   Person(id: 'T', name: 'Tom', color: Color(0xFFCBE4B6)),
   Person(id: 'I', name: 'Inès', color: Color(0xFFF6E19A)),
   Person(id: 'L', name: 'Léa', color: Color(0xFFF8C2BC)),
@@ -204,19 +204,20 @@ List<Request> get seedRequests => [
   ),
 ];
 
-/// Point de départ d'un vault vide : le projet BDD du campus, et moi. Pas de
-/// données d'exemple — elles atterriraient dans les notes de l'utilisateur.
+/// Point de départ d'un vault vide : un projet et une personne, tous deux à
+/// renommer. Pas de données d'exemple — elles atterriraient dans les notes de
+/// l'utilisateur.
 ArdoiseSnapshot vaultStarterSnapshot() => ArdoiseSnapshot(
   projects: [
     Project(
-      id: 'bdd',
-      key: 'BDD',
-      name: 'BDD campus',
+      id: 'projet',
+      key: 'PRJ',
+      name: 'Mon projet',
       milestoneName: '',
       color: T.projectPalette[2],
     ),
   ],
   requests: const [],
-  people: [Person(id: 'D', name: 'Damien', color: T.personPalette.first)],
-  currentUserId: 'D',
+  people: [Person(id: 'moi', name: 'Moi', color: T.personPalette.first)],
+  currentUserId: 'moi',
 );

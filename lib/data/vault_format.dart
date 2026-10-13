@@ -10,9 +10,9 @@ import '../theme/tokens.dart';
 ///
 /// ```text
 /// Ardoise/Ardoise.md              index : qui je suis
-/// Ardoise/Personnes/Damien.md     une note par personne
-/// Ardoise/BDD/BDD.md              la note du projet (corps libre)
-/// Ardoise/BDD/BDD-12.md           une note par demande ; corps = description
+/// Ardoise/Personnes/Dana.md     une note par personne
+/// Ardoise/PRJ/PRJ.md              la note du projet (corps libre)
+/// Ardoise/PRJ/PRJ-12.md           une note par demande ; corps = description
 /// ```
 ///
 /// Seules les notes qui portent la propriété `ardoise` sont lues, et Ardoise
@@ -209,7 +209,7 @@ String fileSafe(String name) {
   return clean.isEmpty ? 'sans-nom' : clean;
 }
 
-/// « [[Damien]] » → « Damien » ; tolère « [[Personnes/Damien|D.]] » et un nom
+/// « [[Dana]] » → « Dana » ; tolère « [[Personnes/Dana|D.]] » et un nom
 /// nu tapé à la main.
 String? linkTarget(Object? value) {
   if (value == null) return null;

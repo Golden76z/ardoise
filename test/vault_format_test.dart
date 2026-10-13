@@ -76,9 +76,9 @@ Le corps.
     });
 
     test('liens Obsidian', () {
-      expect(linkTarget('[[Damien]]'), 'Damien');
-      expect(linkTarget('[[Personnes/Damien|D.]]'), 'Damien');
-      expect(linkTarget('Damien'), 'Damien');
+      expect(linkTarget('[[Dana]]'), 'Dana');
+      expect(linkTarget('[[Personnes/Dana|D.]]'), 'Dana');
+      expect(linkTarget('Dana'), 'Dana');
       expect(linkTarget(''), isNull);
     });
   });
@@ -110,14 +110,14 @@ Le corps.
     test('la disposition : une note par demande, rangée par projet', () {
       final files = renderVault(_seed());
       expect(files.keys, contains('Ardoise/Ardoise.md'));
-      expect(files.keys, contains('Ardoise/Personnes/Damien.md'));
+      expect(files.keys, contains('Ardoise/Personnes/Dana.md'));
       expect(files.keys, contains('Ardoise/ECH/ECH.md'));
       expect(files.keys, contains('Ardoise/ECH/ECH-48.md'));
       final note = parseNote(files['Ardoise/ECH/ECH-48.md']!);
       expect(note.properties['statut'], 'à faire');
       expect(note.properties['type'], 'bug');
       expect(note.properties['demandeur'], '[[Léa]]');
-      expect(note.properties['intervenant'], '[[Damien]]');
+      expect(note.properties['intervenant'], '[[Dana]]');
     });
 
     test('vault vide : pas d’état', () {
@@ -218,7 +218,7 @@ Le corps.
     test('une personne citée sans note est ajoutée', () {
       final files = renderVault(_seed());
       files['Ardoise/ECH/ECH-48.md'] = files['Ardoise/ECH/ECH-48.md']!
-          .replaceFirst('intervenant: "[[Damien]]"', 'intervenant: "[[Zoé]]"');
+          .replaceFirst('intervenant: "[[Dana]]"', 'intervenant: "[[Zoé]]"');
       final back = decodeVault(files, now: _now).snapshot!;
       final zoe = back.people!.singleWhere((p) => p.name == 'Zoé');
       expect(

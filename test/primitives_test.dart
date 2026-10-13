@@ -54,7 +54,7 @@ void main() {
             Person(id: 'K', name: 'Karim', color: Color(0xFFF8CFA2)),
             Person(id: 'T', name: 'Tom', color: Color(0xFFCBE4B6)),
             Person(id: 'I', name: 'Inès', color: Color(0xFFF6E19A)),
-            Person(id: 'D', name: 'Damien', color: Color(0xFFEFC4A6)),
+            Person(id: 'D', name: 'Dana', color: Color(0xFFEFC4A6)),
           ],
           max: 3,
         ),

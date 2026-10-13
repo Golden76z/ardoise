@@ -9,7 +9,7 @@ Obsidian** : chaque demande y est une note, modifiable dans l'app comme dans
 Obsidian, et les deux restent d'accord. **Aucun serveur.** Le web et Android
 fonctionnent aussi, avec un stockage local.
 
-![Capture du tableau](docs/prototype.html)
+La maquette d'origine est dans [`docs/prototype.html`](docs/prototype.html).
 
 ## Ce que ça fait
 
@@ -18,10 +18,11 @@ fonctionnent aussi, avec un stockage local.
 - **Vue Liste** tous mois confondus, avec recherche plein texte et tri par
   date ou statut — pour retrouver une demande ancienne que le tableau,
   filtré par mois, ne montre plus.
-- **Plusieurs projets**, chacun avec sa clé (`ECH-42`), sa couleur et sa
+- **Plusieurs projets**, chacun avec sa clé (`WEB-42`), sa couleur et sa
   numérotation propre.
 - **Filtres** par type et par mois, panneau de détail pour changer le statut,
-  réassigner et écrire la **description**.
+  la **priorité** (basse → urgente) et l'**échéance**, réassigner et écrire
+  la **description**.
 - **Thèmes de couleurs** : Argile, Ardoise, Menthe, Lavande, depuis la pastille
   ronde de la barre de navigation.
 - **Obsidian** : un dossier `Ardoise/` dans le vault, un sous-dossier par
@@ -30,16 +31,47 @@ fonctionnent aussi, avec un stockage local.
   modification faite dans Obsidian (ou par un `git pull`) apparaît dans l'app
   en deux secondes.
 
-## Démarrer
+## Installer
+
+Il faut [Flutter](https://docs.flutter.dev/get-started/install) (3.47 ou plus
+récent) et, sous Linux, la chaîne de compilation de bureau :
 
 ```bash
-flutter create --platforms=linux,windows --org dev.golden .   # une fois
+sudo apt install clang cmake ninja-build pkg-config libgtk-3-dev   # Debian / Ubuntu
+```
+
+Sous Windows, Visual Studio avec la charge de travail « Développement Desktop
+en C++ ».
+
+```bash
+git clone https://github.com/Golden76z/ardoise
+cd ardoise
 flutter pub get
 flutter run -d linux        # ou -d windows
 ```
 
+## Essayer avec la démo
+
+Le dépôt contient un vault Obsidian d'exemple, avec deux projets et des
+demandes fictifs. Copie-le hors du dépôt — l'app écrit dedans — puis indique
+son chemin au premier lancement :
+
+```bash
+cp -r exemple/vault-demo ~/ardoise-demo
+flutter run -d linux        # puis saisir ~/ardoise-demo
+```
+
+`ARDOISE_VAULT=~/ardoise-demo flutter run -d linux` évite la saisie. Tu peux
+ouvrir le même dossier dans Obsidian pour voir les notes changer en direct.
+
+## Avec ton propre vault
+
 Au premier lancement, l'app demande le dossier de ton vault (celui qui
-contient `.obsidian`). `ARDOISE_VAULT=/chemin/du/vault` le force.
+contient `.obsidian`). Elle y crée un dossier `Ardoise/` avec un projet
+« Mon projet » et une personne « Moi », à renommer, et **ne touche à aucune
+autre note**. Le chemin est retenu ; `ARDOISE_VAULT` le force.
+
+## Développer
 
 ```bash
 flutter test

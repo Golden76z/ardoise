@@ -31,7 +31,7 @@ Future<ArdoiseStore> _pump(WidgetTester tester) async {
 
 /// Ouvre le menu de projet puis son entrée « Personnes ».
 Future<void> _openPeople(WidgetTester tester) async {
-  await tester.tap(find.text('Échéo ▾'));
+  await tester.tap(find.text('Écho ▾'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Personnes'));
   await tester.pumpAndSettle();
@@ -69,7 +69,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Échéo ▾'));
+      await tester.tap(find.text('Écho ▾'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'menu à $largeur px');
 
@@ -102,13 +102,13 @@ void main() {
     await _pump(tester);
     await _openPeople(tester);
 
-    for (final nom in ['Damien', 'Tom', 'Inès', 'Léa', 'Karim']) {
+    for (final nom in ['Dana', 'Tom', 'Inès', 'Léa', 'Karim']) {
       expect(_inPanel(find.text(nom)), findsOneWidget);
     }
     expect(
       _inPanel(find.text('vous')),
       findsOneWidget,
-      reason: 'Damien est l’utilisateur',
+      reason: 'Dana est l’utilisateur',
     );
   });
 
@@ -186,7 +186,7 @@ void main() {
     tester,
   ) async {
     final store = await _pump(tester);
-    await tester.tap(find.text('Échéo ▾'));
+    await tester.tap(find.text('Écho ▾'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tout effacer'));
     await tester.pumpAndSettle();

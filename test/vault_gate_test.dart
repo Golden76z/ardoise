@@ -52,7 +52,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(checked, ['/mauvais', '/bon']);
     expect(find.byType(BoardPage), findsOneWidget);
-    expect(find.text('BDD campus'), findsWidgets);
+    expect(find.text('Mon projet'), findsWidgets);
   });
 
   testWidgets('un vault déjà retenu s’ouvre sans rien demander', (

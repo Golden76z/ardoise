@@ -45,7 +45,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester);
-    expect(find.text('Échéo'), findsOneWidget);
+    expect(find.text('Écho'), findsOneWidget);
     expect(find.text('Octobre 2026'), findsOneWidget);
     for (final s in RequestStatus.values) {
       expect(find.text(s.label), findsWidgets);
@@ -60,7 +60,7 @@ void main() {
     await _pump(tester);
     await tester.tap(find.widgetWithText(InkWell, 'Intervenant').first);
     await tester.pumpAndSettle();
-    expect(find.text('Damien'), findsWidgets);
+    expect(find.text('Dana'), findsWidgets);
     expect(find.text('Non assigné'), findsWidgets);
     // La barre des personnes apparaît en mode personne.
     expect(find.text('Intervenants affichés'), findsOneWidget);
