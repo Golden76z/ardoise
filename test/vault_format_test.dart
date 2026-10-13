@@ -192,6 +192,29 @@ Le corps.
       expect(contents.adoptedPaths, {'Ardoise/ECH/Corriger le login.md'});
     });
 
+    test('un nom qui finit par un nombre n’est pas un numéro', () {
+      final files = renderVault(_seed())
+        ..['Ardoise/ECH/import-01.md'] =
+            '---\nardoise: demande\ntitre: Importée\n---\n';
+      final contents = decodeVault(files, now: _now);
+      expect(contents.problems, isEmpty, reason: 'pas un doublon de ECH-1');
+      expect(contents.adoptedPaths, {'Ardoise/ECH/import-01.md'});
+    });
+
+    test('un nom CLE-n sans propriété numero garde son numéro', () {
+      final files = renderVault(_seed())
+        ..['Ardoise/ECH/ECH-900.md'] =
+            '---\nardoise: demande\ntitre: Copiée à la main\n---\n';
+      final contents = decodeVault(files, now: _now);
+      expect(contents.adoptedPaths, isEmpty);
+      expect(
+        contents.snapshot!.requests.any(
+          (r) => r.projectId == 'echeo' && r.number == 900,
+        ),
+        isTrue,
+      );
+    });
+
     test('une valeur inconnue fait ignorer la note, pas tout le vault', () {
       final files = renderVault(_seed());
       files['Ardoise/ECH/ECH-48.md'] = files['Ardoise/ECH/ECH-48.md']!

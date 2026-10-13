@@ -504,9 +504,16 @@ VaultContents decodeVault(Map<String, String> files, {required DateTime now}) {
       dueDate: dueDate,
     );
 
+    // Sans propriété `numero`, seul un nom `CLE-n` (celui qu'écrit l'app)
+    // vaut un numéro. Un nom quelconque qui finit par un nombre
+    // (`import-01`, `notes-2026`) n'en est pas un : la note est adoptée.
+    final keyName = RegExp(
+      '^${RegExp.escape(project.key)}-(\\d+)\$',
+      caseSensitive: false,
+    );
     final number = props['numero'] is int
         ? props['numero']! as int
-        : int.tryParse(RegExp(r'-(\d+)$').firstMatch(stem)?.group(1) ?? '');
+        : int.tryParse(keyName.firstMatch(stem)?.group(1) ?? '');
     if (number == null) {
       // Note créée à la main dans Obsidian : elle reçoit le prochain numéro,
       // et la prochaine écriture la renommera en `CLE-n.md`.
