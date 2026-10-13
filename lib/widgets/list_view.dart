@@ -203,6 +203,9 @@ class _ListRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             );
             final meta = <Widget>[
+              PriorityPill(priority: request.priority),
+              if (request.dueDate case final due?)
+                DueDatePill(date: due, overdue: store.isOverdue(request)),
               PersonAvatar(person: store.personById(request.requesterId)),
               StatusPill(status: request.status),
               Tooltip(

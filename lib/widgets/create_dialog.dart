@@ -4,6 +4,7 @@ import '../data/store.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
+import 'due_date_input.dart';
 import 'primitives.dart';
 
 /// La fenêtre de création. Échap annule (fond translucide de `showGeneralDialog`).
@@ -32,6 +33,8 @@ class _CreateDialogState extends State<_CreateDialog> {
   final _title = TextEditingController();
   final _description = TextEditingController();
   RequestType _type = RequestType.feature;
+  RequestPriority _priority = RequestPriority.medium;
+  DateTime? _dueDate;
 
   /// L'intervenant proposé par défaut est l'utilisateur courant (prototype).
   String? _assigneeId;
@@ -59,6 +62,8 @@ class _CreateDialogState extends State<_CreateDialog> {
       type: _type,
       assigneeId: _assigneeId,
       description: _description.text,
+      priority: _priority,
+      dueDate: _dueDate,
     );
     Navigator.of(context).pop();
   }
@@ -153,6 +158,30 @@ class _CreateDialogState extends State<_CreateDialog> {
                           onTap: () => setState(() => _type = type),
                         ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Priorité', style: TextStyles.label),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final priority in RequestPriority.values)
+                        ChoicePill(
+                          label: priority.label,
+                          selected: _priority == priority,
+                          fill: T.priorityColors(priority).$1,
+                          onTap: () => setState(() => _priority = priority),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Échéance', style: TextStyles.label),
+                  const SizedBox(height: 8),
+                  DueDateInput(
+                    value: _dueDate,
+                    today: widget.store.today,
+                    onChanged: (date) => setState(() => _dueDate = date),
                   ),
                   const SizedBox(height: 16),
                   Text('Intervenant', style: TextStyles.label),

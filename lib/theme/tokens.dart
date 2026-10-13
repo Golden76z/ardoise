@@ -241,6 +241,29 @@ abstract final class T {
     RequestType.idea => palette.idea,
   };
 
+  /// Fond et texte d'une pastille de priorité. Pas thémées : comme dans un
+  /// tableau Kanban, « Urgente » reste rouge quel que soit le thème.
+  static (Color, Color) priorityColors(RequestPriority priority) =>
+      switch (priority) {
+        RequestPriority.low => (const Color(0xFFECEEF1), const Color(0xFF4B5563)),
+        RequestPriority.medium => (
+          const Color(0xFFDCE8FB),
+          const Color(0xFF1E4FA8),
+        ),
+        RequestPriority.high => (
+          const Color(0xFFFDEBD3),
+          const Color(0xFFA3520E),
+        ),
+        RequestPriority.urgent => (
+          const Color(0xFFFBDADA),
+          const Color(0xFFB42323),
+        ),
+      };
+
+  /// Pastille d'échéance dépassée : les couleurs d'« Urgente ».
+  static (Color, Color) get overdueColors =>
+      priorityColors(RequestPriority.urgent);
+
   static Color statusColor(RequestStatus status) => switch (status) {
     RequestStatus.todo => palette.todo,
     RequestStatus.doing => palette.doing,

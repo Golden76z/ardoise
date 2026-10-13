@@ -46,7 +46,9 @@ web. **`dart:io` n'apparaît que dans `vault_repository.dart` et
 
 Propriétés d'une demande : `ardoise: demande`, `numero`, `titre`, `type`
 (bug, fonctionnalité, idée), `statut` (à faire, en cours, en revue, fait),
-`demandeur`, `intervenant` (liens `[[Personne]]`), `cree`. Les votes ont été
+`demandeur`, `intervenant` (liens `[[Personne]]`), `cree`, `priorite` (basse,
+moyenne, haute, urgente ; moyenne si absente), `echeance` (`2026-10-09`,
+facultative). Les votes ont été
 retirés le 13/10 : une ancienne propriété `votes` disparaît à la réécriture.
 
 Règles de la synchronisation — chacune protège des notes réelles :
@@ -106,6 +108,9 @@ Linux il faut `clang cmake ninja-build pkg-config libgtk-3-dev`.
   `BoardPage` (clé = id de palette). Le choix est retenu dans les
   préférences (`ardoise.theme`), pas dans le vault. Les couleurs de
   personnes et de projets ne sont pas thémées : ce sont des données.
+- **Dates saisies** au format `jj/mm/aaaa` (`parseFrenchDate`) : pas de
+  `showDatePicker`, qui demanderait `flutter_localizations` pour parler
+  français. Couleurs de priorité fixes (`T.priorityColors`), pas thémées.
 - **Contour des barres** (navigation, segment, puces de type) :
   `T.softOutline` / `T.softOutlineWidth`, plus épais et plus doux que l'encre
   des cartes.

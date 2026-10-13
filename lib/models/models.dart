@@ -28,6 +28,18 @@ enum RequestStatus {
   final String label;
 }
 
+/// Ordre croissant d'importance : le tri « Par priorité » lit `index` à
+/// l'envers.
+enum RequestPriority {
+  low('Basse'),
+  medium('Moyenne'),
+  high('Haute'),
+  urgent('Urgente');
+
+  const RequestPriority(this.label);
+  final String label;
+}
+
 enum BoardGrouping {
   status('Statut'),
   assignee('Intervenant'),
@@ -47,7 +59,9 @@ enum ViewMode {
 
 enum ListSort {
   recent('Plus récentes'),
-  status('Par statut');
+  status('Par statut'),
+  priority('Par priorité'),
+  due('Par échéance');
 
   const ListSort(this.label);
   final String label;
@@ -130,6 +144,8 @@ class Request {
     required this.requesterId,
     required this.assigneeId,
     required this.createdAt,
+    this.priority = RequestPriority.medium,
+    this.dueDate,
   });
 
   /// Identifie la demande dans son projet ; la référence affichée en dérive.
@@ -152,6 +168,18 @@ class Request {
   /// Sert au filtre par mois.
   final DateTime createdAt;
 
+  final RequestPriority priority;
+
+  /// Échéance, au jour près (heure à minuit) ; `null` = aucune.
+  final DateTime? dueDate;
+
+  /// En retard : échéance passée et demande pas encore faite.
+  bool isOverdue(DateTime today) {
+    final due = dueDate;
+    if (due == null || status == RequestStatus.done) return false;
+    return due.isBefore(DateTime(today.year, today.month, today.day));
+  }
+
   String reference(String projectKey) => '$projectKey-$number';
 
   Request copyWith({
@@ -161,6 +189,9 @@ class Request {
     RequestStatus? status,
     String? assigneeId,
     bool clearAssignee = false,
+    RequestPriority? priority,
+    DateTime? dueDate,
+    bool clearDueDate = false,
   }) => Request(
     number: number,
     projectId: projectId,
@@ -171,6 +202,8 @@ class Request {
     requesterId: requesterId,
     assigneeId: clearAssignee ? null : (assigneeId ?? this.assigneeId),
     createdAt: createdAt,
+    priority: priority ?? this.priority,
+    dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
   );
 
   Map<String, Object?> toJson() => {
@@ -183,6 +216,8 @@ class Request {
     'requesterId': requesterId,
     'assigneeId': assigneeId,
     'createdAt': createdAt.toIso8601String(),
+    'priority': priority.name,
+    'dueDate': dueDate?.toIso8601String(),
   };
 
   /// Lève si un champ manque ou a le mauvais type ; `PrefsRepository`
@@ -200,6 +235,14 @@ class Request {
     assigneeId: json['assigneeId'] as String?,
     // `voterIds`, s'il est encore là (votes retirés le 13/10), est ignoré.
     createdAt: DateTime.parse(json['createdAt']! as String),
+    // Absents des données écrites avant le 13/10 : priorité moyenne, sans
+    // échéance.
+    priority: json['priority'] == null
+        ? RequestPriority.medium
+        : RequestPriority.values.byName(json['priority']! as String),
+    dueDate: json['dueDate'] == null
+        ? null
+        : DateTime.parse(json['dueDate']! as String),
   );
 }
 
@@ -294,4 +337,38 @@ String formatMonthLabelShort(DateTime date) =>
 String formatMonthLabel(DateTime date) {
   final word = formatMonthWord(date);
   return '${word[0].toUpperCase()}${word.substring(1)} ${date.year}';
+}
+
+/// « 09/10/2026 » — le format de saisie d'une échéance.
+String formatNumericDate(DateTime date) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(date.day)}/${two(date.month)}/${date.year}';
+}
+
+/// Lit « 9/10/2026 », « 09/10/26 » ou « 2026-10-09 » ; `null` si la date
+/// n'existe pas (« 31/02/2026 ») ou ne se lit pas.
+DateTime? parseFrenchDate(String text) {
+  final clean = text.trim();
+  final iso = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})$').firstMatch(clean);
+  final fr = RegExp(r'^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$')
+      .firstMatch(clean);
+  int year;
+  int month;
+  int day;
+  if (iso != null) {
+    year = int.parse(iso.group(1)!);
+    month = int.parse(iso.group(2)!);
+    day = int.parse(iso.group(3)!);
+  } else if (fr != null) {
+    day = int.parse(fr.group(1)!);
+    month = int.parse(fr.group(2)!);
+    year = int.parse(fr.group(3)!);
+    if (year < 100) year += 2000;
+  } else {
+    return null;
+  }
+  final date = DateTime(year, month, day);
+  // `DateTime` normalise le 31/02 en 3/03 : on refuse plutôt que de deviner.
+  if (date.year != year || date.month != month || date.day != day) return null;
+  return date;
 }

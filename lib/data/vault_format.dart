@@ -176,6 +176,12 @@ String _isoSeconds(DateTime d) {
       'T${two(d.hour)}:${two(d.minute)}:${two(d.second)}';
 }
 
+/// « 2026-10-09 » : une date sans heure, que le panneau Propriétés
+/// d'Obsidian affiche comme une date.
+String _isoDay(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 /// Même contenu, à la mise en forme près. Sert à ne pas réécrire une note
 /// qu'Obsidian a simplement reformatée : chaque écriture inutile, c'est du
 /// bruit dans l'historique Git du vault.
@@ -257,6 +263,14 @@ RequestType? _parseType(Object? value) {
   final key = _fold('$value');
   for (final type in RequestType.values) {
     if (key == _fold(type.label) || key == type.name) return type;
+  }
+  return null;
+}
+
+RequestPriority? _parsePriority(Object? value) {
+  final key = _fold('$value');
+  for (final priority in RequestPriority.values) {
+    if (key == _fold(priority.label) || key == priority.name) return priority;
   }
   return null;
 }
@@ -448,6 +462,22 @@ VaultContents decodeVault(Map<String, String> files, {required DateTime now}) {
       problems.add('${entry.key} : statut « ${props['statut']} » inconnu (à faire, en cours, en revue ou fait).');
       continue;
     }
+    final priority = props['priorite'] == null
+        ? RequestPriority.medium
+        : _parsePriority(props['priorite']);
+    if (priority == null) {
+      problems.add('${entry.key} : priorité « ${props['priorite']} » inconnue (basse, moyenne, haute ou urgente).');
+      continue;
+    }
+    DateTime? dueDate;
+    if (props['echeance'] != null) {
+      final parsed = DateTime.tryParse('${props['echeance']}');
+      if (parsed == null) {
+        problems.add('${entry.key} : échéance « ${props['echeance']} » illisible.');
+        continue;
+      }
+      dueDate = DateTime(parsed.year, parsed.month, parsed.day);
+    }
     DateTime createdAt = now;
     if (props['cree'] != null) {
       final parsed = DateTime.tryParse('${props['cree']}');
@@ -470,6 +500,8 @@ VaultContents decodeVault(Map<String, String> files, {required DateTime now}) {
       requesterId: resolvePerson(props['demandeur']) ?? '',
       assigneeId: resolvePerson(props['intervenant']),
       createdAt: createdAt,
+      priority: priority,
+      dueDate: dueDate,
     );
 
     final number = props['numero'] is int
@@ -530,6 +562,8 @@ Request _withNumber(Request r, int number) => Request(
   requesterId: r.requesterId,
   assigneeId: r.assigneeId,
   createdAt: r.createdAt,
+  priority: r.priority,
+  dueDate: r.dueDate,
 );
 
 Request _withRequester(Request r, String requesterId) => Request(
@@ -542,6 +576,8 @@ Request _withRequester(Request r, String requesterId) => Request(
   requesterId: requesterId,
   assigneeId: r.assigneeId,
   createdAt: r.createdAt,
+  priority: r.priority,
+  dueDate: r.dueDate,
 );
 
 // — Snapshot → vault —
@@ -653,6 +689,10 @@ Map<String, String> renderVault(
           'statut': request.status.label.toLowerCase(),
           'demandeur': link(request.requesterId),
           'intervenant': link(request.assigneeId),
+          'priorite': request.priority.label.toLowerCase(),
+          'echeance': request.dueDate == null
+              ? null
+              : _isoDay(request.dueDate!),
           'cree': request.createdAt,
         },
         request.description.trim(),

@@ -292,3 +292,69 @@ InputDecoration inkInputDecoration({String? hint}) {
     focusedBorder: border(T.accent),
   );
 }
+
+/// « Haute », « Urgente »… — pleine, sans contour, comme dans un Kanban.
+class PriorityPill extends StatelessWidget {
+  const PriorityPill({super.key, required this.priority});
+
+  final RequestPriority priority;
+
+  @override
+  Widget build(BuildContext context) {
+    final (fill, text) = T.priorityColors(priority);
+    return Semantics(
+      label: 'Priorité ${priority.label.toLowerCase()}',
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(T.rSmallChip),
+          ),
+          child: Text(
+            priority.label,
+            style: TextStyles.bold800.copyWith(
+              color: text,
+              fontSize: T.fsMeta,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// « 📅 9 oct. », en rouge quand l'échéance est passée.
+class DueDatePill extends StatelessWidget {
+  const DueDatePill({super.key, required this.date, required this.overdue});
+
+  final DateTime date;
+  final bool overdue;
+
+  @override
+  Widget build(BuildContext context) {
+    final (fill, text) = overdue
+        ? T.overdueColors
+        : (T.surface, T.muted);
+    return Semantics(
+      label:
+          'Échéance ${formatNumericDate(date)}${overdue ? ', dépassée' : ''}',
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(T.rSmallChip),
+          ),
+          child: Text(
+            '📅 ${formatShortDate(date)}',
+            style: TextStyles.meta.copyWith(
+              color: text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

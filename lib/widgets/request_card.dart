@@ -112,6 +112,9 @@ class RequestCard extends StatelessWidget {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              PriorityPill(priority: request.priority),
+              if (request.dueDate case final due?)
+                DueDatePill(date: due, overdue: store.isOverdue(request)),
               _RequesterPill(person: requester),
               if (showStatus) StatusPill(status: request.status),
               if (showAssignee)

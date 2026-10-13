@@ -301,6 +301,19 @@ class ArdoiseStore extends ChangeNotifier {
       ListSort.recent => (a, b) => b.createdAt.compareTo(a.createdAt),
       // L'ordre de l'enum est l'ordre du flux de travail : à faire → fait.
       ListSort.status => (a, b) => a.status.index.compareTo(b.status.index),
+      // Urgente d'abord.
+      ListSort.priority => (a, b) => b.priority.index.compareTo(
+        a.priority.index,
+      ),
+      // La plus proche d'abord ; sans échéance, à la fin.
+      ListSort.due => (a, b) {
+        final da = a.dueDate;
+        final db = b.dueDate;
+        if (da == null || db == null) {
+          return (da == null ? 1 : 0) - (db == null ? 1 : 0);
+        }
+        return da.compareTo(db);
+      },
     });
     return found;
   }
@@ -411,6 +424,23 @@ class ArdoiseStore extends ChangeNotifier {
     _mutate(number, (request) => request.copyWith(description: clean));
   }
 
+  /// Aujourd'hui, selon l'horloge du store (figée dans les tests).
+  DateTime get today => _now();
+
+  /// En retard au jour d'aujourd'hui : l'UI le lit, elle ne calcule pas.
+  bool isOverdue(Request request) => request.isOverdue(_now());
+
+  void setPriority(int number, RequestPriority priority) =>
+      _mutate(number, (request) => request.copyWith(priority: priority));
+
+  /// `null` retire l'échéance. L'heure est ignorée : une échéance est un jour.
+  void setDueDate(int number, DateTime? date) => _mutate(
+    number,
+    (request) => date == null
+        ? request.copyWith(clearDueDate: true)
+        : request.copyWith(dueDate: DateTime(date.year, date.month, date.day)),
+  );
+
   void setStatus(int number, RequestStatus status) =>
       _mutate(number, (request) => request.copyWith(status: status));
 
@@ -427,6 +457,8 @@ class ArdoiseStore extends ChangeNotifier {
     required RequestType type,
     String? assigneeId,
     String description = '',
+    RequestPriority priority = RequestPriority.medium,
+    DateTime? dueDate,
   }) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return null;
@@ -447,6 +479,10 @@ class ArdoiseStore extends ChangeNotifier {
       requesterId: currentUserId,
       assigneeId: assigneeId,
       createdAt: _creationDate(),
+      priority: priority,
+      dueDate: dueDate == null
+          ? null
+          : DateTime(dueDate.year, dueDate.month, dueDate.day),
     );
     _requests = [request, ..._requests];
     _persist();

@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'avatar.dart';
 import 'dashed.dart';
+import 'due_date_input.dart';
 import 'primitives.dart';
 
 /// `showGeneralDialog` donne gratuitement le fond translucide, la fermeture au
@@ -125,6 +126,37 @@ class _Drawer extends StatelessWidget {
                     key: ValueKey(request.number),
                     store: store,
                     request: request,
+                  ),
+                  const SizedBox(height: 18),
+                  _Field(
+                    label: 'Priorité',
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final priority in RequestPriority.values)
+                          ChoicePill(
+                            label: priority.label,
+                            selected: request.priority == priority,
+                            fill: T.priorityColors(priority).$1,
+                            onTap: () =>
+                                store.setPriority(request.number, priority),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _Field(
+                    label: store.isOverdue(request)
+                        ? 'Échéance — dépassée'
+                        : 'Échéance',
+                    child: DueDateInput(
+                      key: ValueKey('due-${request.number}'),
+                      value: request.dueDate,
+                      today: store.today,
+                      onChanged: (date) =>
+                          store.setDueDate(request.number, date),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   _Field(
