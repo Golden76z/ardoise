@@ -1,7 +1,10 @@
 # Ardoise
 
 Gestionnaire de demandes (bugs / fonctionnalités / idées) multi-projets.
-Flutter web + Android, **sans backend** : tout est local.
+**Appli de bureau d'abord (Linux, Windows)**, sans backend : sur le bureau, les
+demandes vivent dans le **vault Obsidian** de l'utilisateur, une note par
+demande. Le web et Android restent possibles, sur les préférences locales.
+Le premier projet suivi est la **BDD du campus** (clé `BDD`).
 
 - `docs/handoff.md` — le périmètre et le modèle de données d'origine.
 - `docs/prototype.html` — la **référence visuelle et comportementale**. En cas
@@ -23,14 +26,70 @@ Trois couches, et la frontière entre elles n'est pas négociable.
 Le jour où une API arrive, on écrit une implémentation de `ArdoiseRepository`
 et rien d'autre ne bouge. C'est la seule raison d'être de cette interface.
 
+Implémentations : `VaultRepository` (bureau), `PrefsRepository` (web,
+Android), `MemoryRepository` (tests). Le choix se fait au démarrage dans
+`lib/bootstrap/` : import conditionnel, car `dart:io` ne compile pas pour le
+web. **`dart:io` n'apparaît que dans `vault_repository.dart` et
+`bootstrap/home_io.dart`.**
+
+## Le vault Obsidian
+
+`lib/data/vault_format.dart` (pur, testé sans disque) décrit le format ;
+`lib/data/vault_repository.dart` lit et écrit les fichiers.
+
+```text
+<vault>/Ardoise/Ardoise.md            index : `utilisateur` (qui je suis)
+<vault>/Ardoise/Personnes/Damien.md   une note par personne
+<vault>/Ardoise/BDD/BDD.md            note du projet ; corps libre
+<vault>/Ardoise/BDD/BDD-12.md         une demande ; corps = description
+```
+
+Propriétés d'une demande : `ardoise: demande`, `numero`, `titre`, `type`
+(bug, fonctionnalité, idée), `statut` (à faire, en cours, en revue, fait),
+`demandeur`, `intervenant`, `votes` (liens `[[Personne]]`), `cree`.
+
+Règles de la synchronisation — chacune protège des notes réelles :
+
+- **Seules les notes qui portent `ardoise:` sont lues.** Le reste du vault
+  n'est jamais touché, ni en lecture ni en écriture.
+- **L'app n'écrit que ce qu'elle a changé** depuis la dernière lecture (rendu
+  du nouvel état comparé à celui de l'état connu). Ne jamais « réécrire tout
+  l'état » : ce serait écraser ce qui vient d'être modifié dans Obsidian.
+- **Le disque fait foi** : le dossier est sondé toutes les 2 s (signature
+  chemins/dates/tailles) et l'état relu remplace celui du store
+  (`externalChanges`). Un sondage plutôt qu'un `watch` : identique sous
+  Linux et Windows, et il voit aussi un `git pull`.
+- **Lectures et écritures passent par une seule file** : une relecture ne voit
+  jamais une sauvegarde à moitié faite. Écritures atomiques (fichier caché
+  puis renommage).
+- **Lecture en échec ⇒ aucune écriture** (`StateError`). Sinon l'app, repartie
+  sur ses données d'exemple, les graverait par-dessus le vrai vault.
+- Une valeur illisible (statut inconnu, numéro en double) fait ignorer **cette
+  note**, signalée en bandeau — jamais le vault entier, et elle n'est jamais
+  supprimée.
+- Une note créée à la main avec `ardoise: demande` mais sans numéro est
+  **adoptée** à la lecture : numérotée, réécrite en `CLE-n.md`, l'original
+  supprimé. Sinon son numéro changerait à chaque lecture.
+- Ce qu'on ajoute dans Obsidian (tags, propriétés inconnues, corps des notes
+  de projet et de personne) est conservé aux écritures.
+
+Le chemin du vault est retenu dans les préférences (`ardoise.vaultPath`) ; la
+variable d'environnement `ARDOISE_VAULT` le force. `VaultGate` le demande au
+premier lancement, ou quand le dossier retenu a disparu.
+
 ## Commandes
 
 ```bash
 flutter test            # tout doit être vert
 flutter analyze         # doit dire « No issues found! »
 dart format lib test
-flutter run -d chrome
+flutter run -d linux    # ou -d windows ; -d chrome pour le web
 ```
+
+Les dossiers `linux/` et `windows/` se génèrent une fois avec
+`flutter create --platforms=linux,windows --org dev.golden .` (ne touche pas à
+`lib/`). Sous Linux il faut `clang cmake ninja-build pkg-config
+libgtk-3-dev`.
 
 ## Règles
 

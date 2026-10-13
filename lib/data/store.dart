@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
@@ -110,6 +112,8 @@ class ArdoiseStore extends ChangeNotifier {
         // Des données existent peut-être : le dire, sinon la première
         // écriture remplace du vrai travail par des données d'exemple.
         _saveError = 'Lecture des données impossible ($failure).';
+      } else if (_repository.lastLoadWarning != null) {
+        _saveError = _lastWarningShown = _repository.lastLoadWarning;
       }
       _projects = snapshot?.projects ?? seedProjects;
       _requests = snapshot?.requests ?? seedRequests;
@@ -130,6 +134,48 @@ class ArdoiseStore extends ChangeNotifier {
     }
     _loading = false;
     notifyListeners();
+    _externalSubscription ??= _repository.externalChanges.listen(
+      _applyExternal,
+    );
+  }
+
+  StreamSubscription<ArdoiseSnapshot>? _externalSubscription;
+
+  /// Le dépôt a été modifié ailleurs (une note éditée dans Obsidian) : son
+  /// état remplace le nôtre, sans réécriture. Ce qui n'est que de l'affichage
+  /// (projet courant, filtres, recherche) est gardé tant qu'il a un sens.
+  void _applyExternal(ArdoiseSnapshot snapshot) {
+    if (snapshot.projects.isEmpty) return;
+    _projects = snapshot.projects;
+    _requests = snapshot.requests;
+    final people = snapshot.people;
+    if (people != null && people.isNotEmpty) _people = people;
+    final me = snapshot.currentUserId;
+    if (me != null && _people.any((p) => p.id == me)) _currentUserId = me;
+    if (!_people.any((p) => p.id == _currentUserId)) {
+      _currentUserId = _people.first.id;
+    }
+    if (!_projects.any((p) => p.id == _currentProjectId)) {
+      _currentProjectId = _projects.first.id;
+      _searchQuery = '';
+    }
+    _hiddenPersonIds.removeWhere((id) => !_people.any((p) => p.id == id));
+    final warning = _repository.lastLoadWarning;
+    if (warning != null) {
+      _saveError = warning;
+    } else if (_saveError == _lastWarningShown) {
+      _saveError = null;
+    }
+    _lastWarningShown = warning;
+    notifyListeners();
+  }
+
+  String? _lastWarningShown;
+
+  @override
+  void dispose() {
+    _externalSubscription?.cancel();
+    super.dispose();
   }
 
   // — Lecture —

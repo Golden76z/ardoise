@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../theme/tokens.dart';
 
 /// Le premier projet de la liste est celui sur lequel l'app s'ouvre.
 /// Un second projet d'exemple donne du sens au sélecteur dès le départ.
@@ -217,3 +218,20 @@ List<Request> get seedRequests => [
     voterIds: const {},
   ),
 ];
+
+/// Point de départ d'un vault vide : le projet BDD du campus, et moi. Pas de
+/// données d'exemple — elles atterriraient dans les notes de l'utilisateur.
+ArdoiseSnapshot vaultStarterSnapshot() => ArdoiseSnapshot(
+  projects: [
+    Project(
+      id: 'bdd',
+      key: 'BDD',
+      name: 'BDD campus',
+      milestoneName: '',
+      color: T.projectPalette[2],
+    ),
+  ],
+  requests: const [],
+  people: [Person(id: 'D', name: 'Damien', color: T.personPalette.first)],
+  currentUserId: 'D',
+);
