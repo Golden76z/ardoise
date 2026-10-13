@@ -12,8 +12,10 @@ import 'primitives.dart';
 /// Titre, sous-titre, segment de choix, puces de type, et la barre des
 /// personnes en mode Intervenant / Demandeur. En vue Liste, le segment
 /// « Colonnes » et la barre des personnes cèdent la place au tri.
-class BoardHeader extends StatelessWidget {
-  const BoardHeader({super.key, required this.store});
+/// Le nom du projet et son sous-titre. En haut à gauche de la page au large,
+/// sous la barre de navigation sinon.
+class ProjectTitle extends StatelessWidget {
+  const ProjectTitle({super.key, required this.store});
 
   final ArdoiseStore store;
 
@@ -24,20 +26,45 @@ class BoardHeader extends StatelessWidget {
   }
 
   @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        store.project.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: isPhone(context)
+            ? TextStyles.pageTitle.copyWith(fontSize: T.fsPageTitlePhone)
+            : TextStyles.pageTitle,
+      ),
+      const SizedBox(height: 6),
+      Text(
+        store.viewMode == ViewMode.list ? _listSubtitle : store.subtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyles.sub,
+      ),
+    ],
+  );
+}
+
+class BoardHeader extends StatelessWidget {
+  const BoardHeader({super.key, required this.store});
+
+  final ArdoiseStore store;
+
+  @override
   Widget build(BuildContext context) {
     final list = store.viewMode == ViewMode.list;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          store.project.name,
-          style: isPhone(context)
-              ? TextStyles.pageTitle.copyWith(fontSize: T.fsPageTitlePhone)
-              : TextStyles.pageTitle,
-        ),
-        const SizedBox(height: 6),
-        Text(list ? _listSubtitle : store.subtitle, style: TextStyles.sub),
-        const SizedBox(height: 16),
+        // Au large, le titre est monté à côté de la barre de navigation.
+        if (!titleBesideNav(context)) ...[
+          ProjectTitle(store: store),
+          const SizedBox(height: 16),
+        ],
         // Les commandes se centrent sur la page, comme la barre de
         // navigation. Pleine largeur : sans elle, le `Wrap` se dimensionne
         // sur son contenu et l'alignement centré n'a aucun effet.

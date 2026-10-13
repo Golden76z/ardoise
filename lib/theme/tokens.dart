@@ -300,6 +300,11 @@ abstract final class T {
   /// Un seul seuil — deux suffisent rarement et trois ne se maintiennent pas.
   static const phoneBreakpoint = 600.0;
 
+  /// Au-delà, le titre du projet monte en haut à gauche, à hauteur de la
+  /// barre de navigation (qui reste centrée sur la page). En dessous, il
+  /// n'aurait pas la place et repasse sous la barre.
+  static const titleBesideNavMinWidth = 1180.0;
+
   static const pagePadding = 24.0;
   static const pagePaddingPhone = 16.0;
   static const fsPageTitlePhone = 32.0;

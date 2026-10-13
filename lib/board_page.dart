@@ -53,7 +53,7 @@ class BoardPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  NavPill(
+                  _TopBar(
                     store: store,
                     onCreate: () => showCreateRequestDialog(context, store),
                   ),
@@ -86,6 +86,37 @@ class BoardPage extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// La barre de navigation, centrée sur la page. Au large, le titre du projet
+/// occupe le coin haut gauche, à sa hauteur : deux `Expanded` de part et
+/// d'autre gardent la barre au centre exact, et le titre s'abrège plutôt que
+/// de la chevaucher.
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.store, required this.onCreate});
+
+  final ArdoiseStore store;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final nav = NavPill(store: store, onCreate: onCreate);
+    if (!titleBesideNav(context)) return nav;
+    return Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ProjectTitle(store: store),
+          ),
+        ),
+        const SizedBox(width: 16),
+        nav,
+        const SizedBox(width: 16),
+        const Expanded(child: SizedBox.shrink()),
+      ],
+    );
+  }
 }
 
 /// Une écriture perdue en silence, c'est du travail perdu : on le dit.

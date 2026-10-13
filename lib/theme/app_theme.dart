@@ -43,6 +43,10 @@ ThemeData buildArdoiseTheme() {
 bool isPhone(BuildContext context) =>
     MediaQuery.sizeOf(context).width < T.phoneBreakpoint;
 
+/// Vrai quand le titre du projet tient à gauche de la barre de navigation.
+bool titleBesideNav(BuildContext context) =>
+    MediaQuery.sizeOf(context).width >= T.titleBesideNavMinWidth;
+
 /// Styles de texte récurrents, pour ne pas répéter `fontWeight: w800` partout.
 /// Ce sont des getters : ils lisent la palette active (voir `T.palette`).
 abstract final class TextStyles {
