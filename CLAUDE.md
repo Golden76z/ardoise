@@ -88,8 +88,9 @@ flutter run -d linux    # ou -d windows ; -d chrome pour le web
 
 Les dossiers `linux/` et `windows/` se génèrent une fois avec
 `flutter create --platforms=linux,windows --org dev.golden .` (ne touche pas à
-`lib/`). Sous Linux il faut `clang cmake ninja-build pkg-config
-libgtk-3-dev`.
+`lib/`), **puis supprimer `test/widget_test.dart`** qu'il génère (il cherche un
+`MyApp` qui n'existe pas). Ne pas commiter `.idea/` ni `ardoise.iml`. Sous
+Linux il faut `clang cmake ninja-build pkg-config libgtk-3-dev`.
 
 ## Règles
 
