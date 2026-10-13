@@ -2,6 +2,7 @@ import 'package:ardoise/board_page.dart';
 import 'package:ardoise/data/repository.dart';
 import 'package:ardoise/data/seed.dart';
 import 'package:ardoise/data/store.dart';
+import 'package:ardoise/models/models.dart';
 import 'package:ardoise/theme/app_theme.dart';
 import 'package:ardoise/theme/theme_controller.dart';
 import 'package:ardoise/theme/tokens.dart';
