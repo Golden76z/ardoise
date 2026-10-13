@@ -51,10 +51,6 @@ class _Drawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final requester = store.personById(request.requesterId);
-    final voters = request.voterIds
-        .map(store.personById)
-        .whereType<Person>()
-        .toList(growable: false);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -122,10 +118,14 @@ class _Drawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(request.title, style: TextStyles.panelTitle),
-                  if (request.description.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(request.description, style: TextStyles.description),
-                  ],
+                  const SizedBox(height: 8),
+                  // Clé par demande : un brouillon ne passe pas d'une demande
+                  // à l'autre.
+                  _DescriptionEditor(
+                    key: ValueKey(request.number),
+                    store: store,
+                    request: request,
+                  ),
                   const SizedBox(height: 18),
                   _Field(
                     label: 'Statut',
@@ -173,39 +173,22 @@ class _Drawer extends StatelessWidget {
                   const SizedBox(height: 14),
                   const DashedDivider(),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Demandé par', style: TextStyles.label),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              PersonAvatar(person: requester, size: 28),
-                              const SizedBox(width: 6),
-                              Text(
-                                requester?.name ?? '—',
-                                style: TextStyles.body,
-                              ),
-                            ],
+                  _Field(
+                    label: 'Demandé par',
+                    child: Row(
+                      children: [
+                        PersonAvatar(person: requester, size: 28),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            requester?.name ?? '—',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyles.body,
                           ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AvatarStack(people: voters),
-                          const SizedBox(width: 10),
-                          _BigVote(store: store, request: request),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -234,44 +217,115 @@ class _Field extends StatelessWidget {
   );
 }
 
-class _BigVote extends StatelessWidget {
-  const _BigVote({required this.store, required this.request});
+/// La description : lue telle quelle, modifiée sur place. Rien n'est écrit
+/// avant « Enregistrer » — dans le vault, chaque écriture est un changement
+/// de note.
+class _DescriptionEditor extends StatefulWidget {
+  const _DescriptionEditor({
+    super.key,
+    required this.store,
+    required this.request,
+  });
 
   final ArdoiseStore store;
   final Request request;
 
   @override
+  State<_DescriptionEditor> createState() => _DescriptionEditorState();
+}
+
+class _DescriptionEditorState extends State<_DescriptionEditor> {
+  TextEditingController? _draft;
+
+  @override
+  void dispose() {
+    _draft?.dispose();
+    super.dispose();
+  }
+
+  void _edit() => setState(
+    () => _draft = TextEditingController(text: widget.request.description),
+  );
+
+  void _close() {
+    final draft = _draft;
+    setState(() => _draft = null);
+    draft?.dispose();
+  }
+
+  void _save() {
+    widget.store.setDescription(widget.request.number, _draft!.text);
+    _close();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final voted = request.votedBy(store.currentUserId);
-    return Semantics(
-      button: true,
-      selected: voted,
-      label: voted ? 'Retirer mon vote' : 'Voter',
-      child: InkWell(
-        onTap: () => store.toggleVote(request.number),
-        borderRadius: BorderRadius.circular(22),
-        child: SizedBox(
-          height: 44,
-          child: InkOutline(
-            radius: 22,
-            color: T.accentSoft,
-            shadow: const [
-              BoxShadow(color: T.shadowOffset, offset: Offset(2, 2)),
-            ],
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              widthFactor: 1,
-              child: Text(
-                '▲ ${request.votes} vote${request.votes > 1 ? 's' : ''}',
-                style: TextStyles.bold800.copyWith(
-                  color: T.accentInk,
-                  fontSize: 16,
+    final draft = _draft;
+    if (draft != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: draft,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 12,
+            keyboardType: TextInputType.multiline,
+            style: TextStyles.body,
+            decoration: inkInputDecoration(
+              hint: 'Contexte, étapes pour reproduire, idée de solution…',
+            ).copyWith(labelText: 'Description'),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Flexible(
+                child: PillButton(
+                  label: 'Annuler',
+                  style: PillStyle.ghost,
+                  height: 36,
+                  onPressed: _close,
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: PillButton(
+                  label: 'Enregistrer',
+                  height: 36,
+                  onPressed: _save,
+                ),
+              ),
+            ],
           ),
+        ],
+      );
+    }
+
+    final description = widget.request.description;
+    if (description.isEmpty) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: PillButton(
+          label: '+ Ajouter une description',
+          style: PillStyle.ghost,
+          height: 34,
+          onPressed: _edit,
         ),
-      ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SelectableText(description, style: TextStyles.description),
+        const SizedBox(height: 6),
+        PillButton(
+          label: 'Modifier la description',
+          style: PillStyle.ghost,
+          height: 30,
+          onPressed: _edit,
+        ),
+      ],
     );
   }
 }

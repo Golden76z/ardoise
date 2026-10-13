@@ -88,7 +88,7 @@ class _SearchFieldState extends State<_SearchField> {
       filled: true,
       fillColor: T.bg,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-      prefixIcon: const Padding(
+      prefixIcon: Padding(
         padding: EdgeInsets.only(left: 16, right: 10),
         child: Center(
           widthFactor: 1,
@@ -104,7 +104,7 @@ class _SearchFieldState extends State<_SearchField> {
               child: InkWell(
                 onTap: _clear,
                 customBorder: const CircleBorder(),
-                child: const SizedBox(
+                child: SizedBox(
                   width: 44,
                   height: 44,
                   child: ExcludeSemantics(
@@ -214,12 +214,6 @@ class _ListRow extends StatelessWidget {
                   size: 28,
                   dashed: true,
                 ),
-              ),
-              VoteButton(
-                onToggle: () => store.toggleVote(request.number),
-                votes: request.votes,
-                voted: request.votedBy(store.currentUserId),
-                title: request.title,
               ),
             ];
 

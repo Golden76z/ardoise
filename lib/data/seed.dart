@@ -43,7 +43,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 7),
-    voterIds: const {'K', 'T'},
   ),
   Request(
     number: 51,
@@ -55,7 +54,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: 'T',
     createdAt: DateTime(2026, 10, 2),
-    voterIds: const {'L', 'I', 'T'},
   ),
   Request(
     number: 53,
@@ -68,7 +66,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: null,
     createdAt: DateTime(2026, 10, 6),
-    voterIds: const {'D'},
   ),
   Request(
     number: 42,
@@ -80,7 +77,6 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 1),
-    voterIds: const {'L', 'K', 'I'},
   ),
   Request(
     number: 47,
@@ -92,7 +88,6 @@ List<Request> get seedRequests => [
     requesterId: 'D',
     assigneeId: 'I',
     createdAt: DateTime(2026, 10, 5),
-    voterIds: const {},
   ),
   Request(
     number: 39,
@@ -105,7 +100,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'T',
     createdAt: DateTime(2026, 10, 3),
-    voterIds: const {'K', 'T'},
   ),
   Request(
     number: 35,
@@ -117,7 +111,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: 'I',
     createdAt: DateTime(2026, 10, 1),
-    voterIds: const {'L', 'K', 'T'},
   ),
   Request(
     number: 40,
@@ -129,7 +122,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 4),
-    voterIds: const {'I'},
   ),
   Request(
     number: 30,
@@ -142,7 +134,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'I',
     createdAt: DateTime(2026, 9, 12),
-    voterIds: const {'K', 'T', 'D'},
   ),
   Request(
     number: 31,
@@ -154,7 +145,6 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 9, 18),
-    voterIds: const {'L', 'I'},
   ),
   Request(
     number: 33,
@@ -166,7 +156,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: null,
     createdAt: DateTime(2026, 9, 25),
-    voterIds: const {'L', 'K'},
   ),
   Request(
     number: 56,
@@ -178,7 +167,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: null,
     createdAt: DateTime(2026, 11, 2),
-    voterIds: const {'L'},
   ),
   Request(
     number: 57,
@@ -190,7 +178,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'T',
     createdAt: DateTime(2026, 11, 4),
-    voterIds: const {},
   ),
   // — Second projet : la numérotation repart à 1. —
   Request(
@@ -203,7 +190,6 @@ List<Request> get seedRequests => [
     requesterId: 'D',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 3),
-    voterIds: const {'T'},
   ),
   Request(
     number: 2,
@@ -215,7 +201,6 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 6),
-    voterIds: const {},
   ),
 ];
 

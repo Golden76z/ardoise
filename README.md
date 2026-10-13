@@ -16,12 +16,14 @@ fonctionnent aussi, avec un stockage local.
 - **Tableau** groupable au choix par **statut**, **intervenant** ou
   **demandeur**, avec glisser-déposer des cartes entre colonnes.
 - **Vue Liste** tous mois confondus, avec recherche plein texte et tri par
-  date, votes ou statut — pour retrouver une demande ancienne que le tableau,
+  date ou statut — pour retrouver une demande ancienne que le tableau,
   filtré par mois, ne montre plus.
 - **Plusieurs projets**, chacun avec sa clé (`ECH-42`), sa couleur et sa
   numérotation propre.
-- **Filtres** par type et par mois, **votes** (un par personne et par demande),
-  panneau de détail pour changer le statut et réassigner.
+- **Filtres** par type et par mois, panneau de détail pour changer le statut,
+  réassigner et écrire la **description**.
+- **Thèmes de couleurs** : Argile, Ardoise, Menthe, Lavande, depuis la pastille
+  ronde de la barre de navigation.
 - **Obsidian** : un dossier `Ardoise/` dans le vault, un sous-dossier par
   projet, une note par demande (propriétés + description). Une note créée
   dans Obsidian avec `ardoise: demande` devient une demande ; une
@@ -68,9 +70,7 @@ plans d'implémentation.
 ## Ce qu'il ne fait pas encore
 
 Pas de comptes ni d'authentification ; le partage entre appareils passe par
-la synchronisation du vault (Git), pas par l'app. Pas de vue Votes, pas de commentaires ni de
-pièces jointes. Tout cela attend une API ; le modèle de données la prévoit
-déjà.
+la synchronisation du vault (Git), pas par l'app. Pas de commentaires ni de pièces jointes.
 
 ## Licence
 

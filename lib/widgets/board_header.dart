@@ -29,29 +29,26 @@ class BoardHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
+        Text(
+          store.project.name,
+          style: isPhone(context)
+              ? TextStyles.pageTitle.copyWith(fontSize: T.fsPageTitlePhone)
+              : TextStyles.pageTitle,
+        ),
+        const SizedBox(height: 6),
+        Text(list ? _listSubtitle : store.subtitle, style: TextStyles.sub),
+        const SizedBox(height: 16),
+        // Les commandes se centrent sur la page, comme la barre de
+        // navigation. Pleine largeur : sans elle, le `Wrap` se dimensionne
+        // sur son contenu et l'alignement centré n'a aucun effet.
+        SizedBox(
+          width: double.infinity,
+          child: Wrap(
           spacing: 16,
           runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.end,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.project.name,
-                  style: isPhone(context)
-                      ? TextStyles.pageTitle.copyWith(
-                          fontSize: T.fsPageTitlePhone,
-                        )
-                      : TextStyles.pageTitle,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  list ? _listSubtitle : store.subtitle,
-                  style: TextStyles.sub,
-                ),
-              ],
-            ),
             if (list)
               _Segment<ListSort>(
                 label: 'Trier',
@@ -76,6 +73,7 @@ class BoardHeader extends StatelessWidget {
             if (isPhone(context) && store.viewMode == ViewMode.board)
               MonthPicker(store: store),
           ],
+          ),
         ),
         if (!list && store.grouping != BoardGrouping.status) ...[
           const SizedBox(height: 18),
@@ -113,6 +111,8 @@ class _Segment<V> extends StatelessWidget {
   Widget _box(BuildContext context) => InkOutline(
     radius: 22,
     color: T.surface,
+    borderColor: T.softOutline,
+    borderWidth: T.softOutlineWidth,
     padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
     // Un `Wrap` et non un `Row` : « Trier » et ses trois options dépassent la
     // largeur d'une fenêtre étroite, et un dépassement se voit à l'écran.
@@ -248,9 +248,16 @@ class _TypeChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(T.rChip),
         child: active
-            ? InkOutline(radius: T.rChip, color: color, child: body)
+            ? InkOutline(
+                radius: T.rChip,
+                color: color,
+                borderColor: T.softOutline,
+                borderWidth: T.softOutlineWidth,
+                child: body,
+              )
             : DashedBorder(
                 radius: T.rChip,
+                width: T.softOutlineWidth,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: T.surface,

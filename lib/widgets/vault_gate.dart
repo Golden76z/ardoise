@@ -93,7 +93,7 @@ class _VaultGateState extends State<VaultGate> {
     if (store != null) return BoardPage(store: store);
     // Lancement avec un vault déjà retenu : pas de formulaire qui clignote.
     if (_busy && widget.initialPath != null && _problem == null) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: T.bg,
         body: Center(child: CircularProgressIndicator(color: T.accent)),
       );
@@ -101,7 +101,7 @@ class _VaultGateState extends State<VaultGate> {
 
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: T.ink, width: T.borderWidth),
+      borderSide: BorderSide(color: T.ink, width: T.borderWidth),
     );
     return Scaffold(
       backgroundColor: T.bg,
@@ -123,14 +123,14 @@ class _VaultGateState extends State<VaultGate> {
                     children: [
                       Text('Où est ton vault ?', style: TextStyles.panelTitle),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         'Ardoise range ses demandes dans un dossier « Ardoise » '
                         'de ton vault Obsidian : une note par demande, que tu '
                         'peux aussi modifier depuis Obsidian.',
                         style: TextStyles.sub,
                       ),
                       const SizedBox(height: 16),
-                      const Text('Dossier du vault', style: TextStyles.label),
+                      Text('Dossier du vault', style: TextStyles.label),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _path,
@@ -149,7 +149,7 @@ class _VaultGateState extends State<VaultGate> {
                           border: border,
                           enabledBorder: border,
                           focusedBorder: border.copyWith(
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                               color: T.accent,
                               width: T.borderWidth,
                             ),

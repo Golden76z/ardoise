@@ -57,8 +57,9 @@ void main() {
     tester,
   ) async {
     await _pumpAt(tester, 412);
-    // « Votes » est inerte : au téléphone elle coûterait de la largeur pour rien.
-    expect(find.text('Votes'), findsNothing);
+    // Le choix du thème est réservé au bureau : la rangée unique n'a pas la
+    // place.
+    expect(find.byTooltip('Thème de couleurs'), findsNothing);
     // Le bouton de création perd son libellé mais garde son nom accessible.
     expect(find.text('+ Demande'), findsNothing);
     expect(find.bySemanticsLabel(RegExp('Nouvelle demande')), findsOneWidget);
@@ -123,7 +124,7 @@ void main() {
 
   testWidgets('au bureau, la navigation garde tout', (tester) async {
     await _pumpAt(tester, 1440);
-    expect(find.text('Votes'), findsOneWidget);
+    expect(find.byTooltip('Thème de couleurs'), findsOneWidget);
     expect(find.text('+ Demande'), findsOneWidget);
     expect(find.text('Colonnes'), findsOneWidget);
   });

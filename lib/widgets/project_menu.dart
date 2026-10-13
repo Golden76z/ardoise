@@ -311,7 +311,7 @@ Future<void> _showDeleteProjectDialog(
 
 /// La décoration des champs, reprise du champ « Titre » de `create_dialog.dart`.
 InputDecoration _fieldDecoration(String hint) {
-  const border = BorderSide(color: T.ink, width: T.borderWidth);
+  final border = BorderSide(color: T.ink, width: T.borderWidth);
   final radius = BorderRadius.circular(16);
   return InputDecoration(
     hintText: hint,
@@ -323,7 +323,7 @@ InputDecoration _fieldDecoration(String hint) {
     enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: border),
     focusedBorder: OutlineInputBorder(
       borderRadius: radius,
-      borderSide: const BorderSide(color: T.accent, width: T.borderWidth),
+      borderSide: BorderSide(color: T.accent, width: T.borderWidth),
     ),
   );
 }
@@ -423,7 +423,7 @@ class _CreateProjectDialogState extends State<_CreateProjectDialog> {
     children: [
       Text('Nouveau projet', style: TextStyles.panelTitle),
       const SizedBox(height: 16),
-      const Text('Nom', style: TextStyles.label),
+      Text('Nom', style: TextStyles.label),
       const SizedBox(height: 8),
       TextField(
         key: const Key('project-name'),
@@ -433,7 +433,7 @@ class _CreateProjectDialogState extends State<_CreateProjectDialog> {
         decoration: _fieldDecoration('Ex. : Atelier'),
       ),
       const SizedBox(height: 16),
-      const Text('Clé — préfixe des références', style: TextStyles.label),
+      Text('Clé — préfixe des références', style: TextStyles.label),
       const SizedBox(height: 8),
       TextField(
         key: const Key('project-key'),
@@ -447,7 +447,7 @@ class _CreateProjectDialogState extends State<_CreateProjectDialog> {
         decoration: _fieldDecoration('Ex. : ATL — 5 caractères au plus'),
       ),
       const SizedBox(height: 16),
-      const Text('Couleur', style: TextStyles.label),
+      Text('Couleur', style: TextStyles.label),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -853,15 +853,15 @@ class _NameField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: T.ink, width: T.borderWidth),
+              borderSide: BorderSide(color: T.ink, width: T.borderWidth),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: T.ink, width: T.borderWidth),
+              borderSide: BorderSide(color: T.ink, width: T.borderWidth),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
+              borderSide: BorderSide(
                 color: T.accent,
                 width: T.borderWidth,
               ),

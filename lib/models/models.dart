@@ -47,7 +47,6 @@ enum ViewMode {
 
 enum ListSort {
   recent('Plus récentes'),
-  votes('Plus votées'),
   status('Par statut');
 
   const ListSort(this.label);
@@ -131,7 +130,6 @@ class Request {
     required this.requesterId,
     required this.assigneeId,
     required this.createdAt,
-    required this.voterIds,
   });
 
   /// Identifie la demande dans son projet ; la référence affichée en dérive.
@@ -154,13 +152,6 @@ class Request {
   /// Sert au filtre par mois.
   final DateTime createdAt;
 
-  /// Un vote par personne (handoff §1) : le compte en dérive.
-  final Set<String> voterIds;
-
-  int get votes => voterIds.length;
-
-  bool votedBy(String personId) => voterIds.contains(personId);
-
   String reference(String projectKey) => '$projectKey-$number';
 
   Request copyWith({
@@ -170,7 +161,6 @@ class Request {
     RequestStatus? status,
     String? assigneeId,
     bool clearAssignee = false,
-    Set<String>? voterIds,
   }) => Request(
     number: number,
     projectId: projectId,
@@ -181,7 +171,6 @@ class Request {
     requesterId: requesterId,
     assigneeId: clearAssignee ? null : (assigneeId ?? this.assigneeId),
     createdAt: createdAt,
-    voterIds: voterIds ?? this.voterIds,
   );
 
   Map<String, Object?> toJson() => {
@@ -194,7 +183,6 @@ class Request {
     'requesterId': requesterId,
     'assigneeId': assigneeId,
     'createdAt': createdAt.toIso8601String(),
-    'voterIds': voterIds.toList(),
   };
 
   /// Lève si un champ manque ou a le mauvais type ; `PrefsRepository`
@@ -210,8 +198,8 @@ class Request {
     status: RequestStatus.values.byName(json['status']! as String),
     requesterId: json['requesterId']! as String,
     assigneeId: json['assigneeId'] as String?,
+    // `voterIds`, s'il est encore là (votes retirés le 13/10), est ignoré.
     createdAt: DateTime.parse(json['createdAt']! as String),
-    voterIds: (json['voterIds']! as List).cast<String>().toSet(),
   );
 }
 

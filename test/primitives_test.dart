@@ -134,7 +134,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       _host(
-        const InkOutline(radius: T.rCard, color: T.surface, child: Text('x')),
+        InkOutline(radius: T.rCard, color: T.surface, child: Text('x')),
       ),
     );
     final decoration =

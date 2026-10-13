@@ -299,7 +299,6 @@ class ArdoiseStore extends ChangeNotifier {
 
     found.sort(switch (_listSort) {
       ListSort.recent => (a, b) => b.createdAt.compareTo(a.createdAt),
-      ListSort.votes => (a, b) => b.votes.compareTo(a.votes),
       // L'ordre de l'enum est l'ordre du flux de travail : à faire → fait.
       ListSort.status => (a, b) => a.status.index.compareTo(b.status.index),
     });
@@ -404,11 +403,13 @@ class ArdoiseStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleVote(int number) => _mutate(number, (request) {
-    final voters = {...request.voterIds};
-    if (!voters.remove(currentUserId)) voters.add(currentUserId);
-    return request.copyWith(voterIds: voters);
-  });
+  /// Espaces de bord retirés : la description est aussi le corps de la note
+  /// Obsidian, où un blanc final serait du bruit à chaque relecture.
+  void setDescription(int number, String description) {
+    final clean = description.trim();
+    if (requestByNumber(number)?.description == clean) return;
+    _mutate(number, (request) => request.copyWith(description: clean));
+  }
 
   void setStatus(int number, RequestStatus status) =>
       _mutate(number, (request) => request.copyWith(status: status));
@@ -425,6 +426,7 @@ class ArdoiseStore extends ChangeNotifier {
     required String title,
     required RequestType type,
     String? assigneeId,
+    String description = '',
   }) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return null;
@@ -439,13 +441,12 @@ class ArdoiseStore extends ChangeNotifier {
           1,
       projectId: _currentProjectId,
       title: trimmed,
-      description: '',
+      description: description.trim(),
       type: type,
       status: RequestStatus.todo,
       requesterId: currentUserId,
       assigneeId: assigneeId,
       createdAt: _creationDate(),
-      voterIds: const {},
     );
     _requests = [request, ..._requests];
     _persist();
@@ -494,8 +495,7 @@ class ArdoiseStore extends ChangeNotifier {
   }
 
   /// Refusé quand la personne est **demandeuse** : une demande sans demandeur
-  /// n'a pas de sens. Sinon elle est détachée des intervenants et des votes,
-  /// puis supprimée.
+  /// n'a pas de sens. Sinon elle est retirée des intervenants, puis supprimée.
   String? deletePerson(String id) {
     if (!_people.any((p) => p.id == id)) return 'Cette personne n’existe pas.';
     if (id == _currentUserId) {
@@ -516,11 +516,8 @@ class ArdoiseStore extends ChangeNotifier {
 
     _requests = [
       for (final request in _requests)
-        if (request.assigneeId == id || request.voterIds.contains(id))
-          request.copyWith(
-            clearAssignee: request.assigneeId == id,
-            voterIds: {...request.voterIds}..remove(id),
-          )
+        if (request.assigneeId == id)
+          request.copyWith(clearAssignee: true)
         else
           request,
     ];

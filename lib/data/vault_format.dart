@@ -470,12 +470,6 @@ VaultContents decodeVault(Map<String, String> files, {required DateTime now}) {
       requesterId: resolvePerson(props['demandeur']) ?? '',
       assigneeId: resolvePerson(props['intervenant']),
       createdAt: createdAt,
-      voterIds: {
-        for (final voter in props['votes'] is List
-            ? props['votes']! as List
-            : const [])
-          ?resolvePerson(voter),
-      },
     );
 
     final number = props['numero'] is int
@@ -536,7 +530,6 @@ Request _withNumber(Request r, int number) => Request(
   requesterId: r.requesterId,
   assigneeId: r.assigneeId,
   createdAt: r.createdAt,
-  voterIds: r.voterIds,
 );
 
 Request _withRequester(Request r, String requesterId) => Request(
@@ -549,7 +542,6 @@ Request _withRequester(Request r, String requesterId) => Request(
   requesterId: requesterId,
   assigneeId: r.assigneeId,
   createdAt: r.createdAt,
-  voterIds: r.voterIds,
 );
 
 // — Snapshot → vault —
@@ -578,6 +570,8 @@ Map<String, String> renderVault(
     final previous = previousText == null ? null : parseNote(previousText);
     final merged = {...props};
     previous?.properties.forEach((key, value) {
+      // `votes` : propriété des anciennes notes, retirée avec les votes.
+      if (key == 'votes') return;
       merged.putIfAbsent(key, () => value);
     });
     final finalBody = keepBody && previous != null && previous.body.trim().isNotEmpty
@@ -649,9 +643,6 @@ Map<String, String> renderVault(
         snapshot.requests.where((r) => r.projectId == project.id).toList()
           ..sort((a, b) => a.number.compareTo(b.number));
     for (final request in requests) {
-      final voters = [
-        for (final id in request.voterIds) ?link(id),
-      ]..sort();
       emit(
         '$vaultFolder/$folder/$folder-${request.number}.md',
         {
@@ -662,7 +653,6 @@ Map<String, String> renderVault(
           'statut': request.status.label.toLowerCase(),
           'demandeur': link(request.requesterId),
           'intervenant': link(request.assigneeId),
-          'votes': voters,
           'cree': request.createdAt,
         },
         request.description.trim(),

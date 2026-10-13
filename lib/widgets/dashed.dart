@@ -13,7 +13,7 @@ class DashedBorder extends StatelessWidget {
     required this.child,
     this.radius,
     this.circle = false,
-    this.color = T.lineStrong,
+    this.color,
     this.width = T.borderWidth,
     this.dash = 4,
     this.gap = 3,
@@ -22,7 +22,9 @@ class DashedBorder extends StatelessWidget {
   final Widget child;
   final double? radius;
   final bool circle;
-  final Color color;
+
+  /// `null` : `T.lineStrong` de la palette active.
+  final Color? color;
   final double width;
   final double dash;
   final double gap;
@@ -32,7 +34,7 @@ class DashedBorder extends StatelessWidget {
     painter: _DashedPainter(
       radius: radius ?? 0,
       circle: circle,
-      color: color,
+      color: color ?? T.lineStrong,
       strokeWidth: width,
       dash: dash,
       gap: gap,
@@ -103,13 +105,14 @@ class _DashedPainter extends CustomPainter {
 
 /// Le filet pointillé qui sépare le pied des panneaux.
 class DashedDivider extends StatelessWidget {
-  const DashedDivider({super.key, this.color = T.line});
+  const DashedDivider({super.key, this.color});
 
-  final Color color;
+  /// `null` : `T.line` de la palette active.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: _DashedLinePainter(color),
+    painter: _DashedLinePainter(color ?? T.line),
     size: const Size(double.infinity, T.borderWidth),
   );
 }

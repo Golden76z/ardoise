@@ -118,16 +118,25 @@ void main() {
     expect(store.requestByNumber(48)!.assigneeId, isNull);
   });
 
-  testWidgets('voter depuis la carte bascule le vote', (tester) async {
+  testWidgets('la description se modifie depuis le détail', (tester) async {
     final store = await _pump(tester);
-    final before = store.requestByNumber(48)!.votes;
-    await tester.tap(
-      find.bySemanticsLabel(
-        RegExp('Voter pour Crash à l’import depuis la galerie'),
-      ),
-    );
+    await tester.tap(find.text('Crash à l’import depuis la galerie'));
     await tester.pumpAndSettle();
-    expect(store.requestByNumber(48)!.votes, before + 1);
+    await tester.tap(find.text('Modifier la description'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Description'),
+      '  Seulement les HEIC.  ',
+    );
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(store.requestByNumber(48)!.description, 'Seulement les HEIC.');
+    expect(find.text('Seulement les HEIC.'), findsOneWidget);
+  });
+
+  testWidgets('aucune trace de vote sur les cartes', (tester) async {
+    await _pump(tester);
+    expect(find.textContaining('▲'), findsNothing);
   });
 
   testWidgets(

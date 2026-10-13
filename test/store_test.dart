@@ -151,7 +151,7 @@ void main() {
   });
 
   test(
-    'supprimer : détache l’intervenant et les votes, puis supprime',
+    'supprimer : détache l’intervenant, puis supprime',
     () async {
       final store = await _store();
       // On crée quelqu'un qui n'a demandé aucune demande, puis on l'implique.
@@ -163,11 +163,6 @@ void main() {
       expect(store.deletePerson(zoe), isNull);
       expect(store.people.map((p) => p.id), isNot(contains(zoe)));
       expect(store.requestByNumber(48)!.assigneeId, isNull, reason: 'détaché');
-      expect(
-        store.visibleRequests.every((r) => !r.voterIds.contains(zoe)),
-        isTrue,
-        reason: 'retiré des votes',
-      );
     },
   );
 
@@ -368,18 +363,29 @@ void main() {
     expect(december.visibleMonth, DateTime(2026, 12));
   });
 
-  test('vote : bascule, et le compte suit', () async {
+  test('description : modifiée, nettoyée, et rien si elle ne change pas',
+      () async {
+    final repo = MemoryRepository(_snapshot());
+    final store = await _store(repo: repo);
+    var notified = 0;
+    store.addListener(() => notified++);
+
+    store.setDescription(48, '  Seulement les HEIC.\n');
+    expect(store.requestByNumber(48)!.description, 'Seulement les HEIC.');
+    expect(notified, 1);
+
+    store.setDescription(48, 'Seulement les HEIC.');
+    expect(notified, 1, reason: 'aucune écriture pour rien');
+  });
+
+  test('création : la description est gardée', () async {
     final store = await _store();
-    final before = store.requestByNumber(48)!.votes;
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isFalse);
-
-    store.toggleVote(48);
-    expect(store.requestByNumber(48)!.votes, before + 1);
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isTrue);
-
-    store.toggleVote(48);
-    expect(store.requestByNumber(48)!.votes, before);
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isFalse);
+    final created = store.createRequest(
+      title: 'Export',
+      type: RequestType.feature,
+      description: ' En CSV. ',
+    )!;
+    expect(created.description, 'En CSV.');
   });
 
   test('changer le statut déplace la carte de colonne', () async {
@@ -415,7 +421,6 @@ void main() {
       expect(created.status, RequestStatus.todo);
       expect(created.requesterId, store.currentUserId);
       expect(created.assigneeId, 'T');
-      expect(created.voterIds, isEmpty);
       expect(store.columns.first.requests.first.number, 58);
     },
   );
@@ -462,13 +467,13 @@ void main() {
     final repo = MemoryRepository(_snapshot())..failWith = 'disque plein';
     final store = await _store(repo: repo);
     expect(store.saveError, isNull);
-    store.toggleVote(48);
+    store.setStatus(48, RequestStatus.done);
     await Future<void>.delayed(Duration.zero);
     expect(store.saveError, isNotNull);
     expect(store.saveError, contains('disque plein'));
 
     repo.failWith = null;
-    store.toggleVote(48);
+    store.setStatus(48, RequestStatus.todo);
     await Future<void>.delayed(Duration.zero);
     expect(store.saveError, isNull);
   });
@@ -482,7 +487,7 @@ void main() {
       ..toggleType(RequestType.bug)
       ..togglePerson('D')
       ..shiftMonth(1)
-      ..toggleVote(56)
+      ..setDescription(56, 'Nouvelle description')
       ..setStatus(56, RequestStatus.doing)
       ..setAssignee(56, 'L');
     expect(notified, greaterThanOrEqualTo(7));
@@ -650,7 +655,7 @@ void main() {
       // On agit sur la n°1 d’Atelier : celle de Maison ne doit pas bouger.
       store.setCurrentProject('atelier');
       store.setStatus(1, RequestStatus.done);
-      store.toggleVote(1);
+      store.setDescription(1, 'Chêne massif');
       store.setAssignee(1, 'K');
 
       final atelier = store.requestByNumber(1)!;
@@ -666,7 +671,11 @@ void main() {
         RequestStatus.todo,
         reason: 'écriture croisée entre projets',
       );
-      expect(maison.votes, 0, reason: 'vote croisé entre projets');
+      expect(
+        maison.description,
+        isNot('Chêne massif'),
+        reason: 'description croisée entre projets',
+      );
       expect(
         maison.assigneeId,
         isNull,
@@ -713,13 +722,6 @@ void main() {
     expect(
       dates,
       orderedEquals(List.of(dates)..sort((a, b) => b.compareTo(a))),
-    );
-
-    store.setListSort(ListSort.votes);
-    final votes = store.listRequests.map((r) => r.votes).toList();
-    expect(
-      votes,
-      orderedEquals(List.of(votes)..sort((a, b) => b.compareTo(a))),
     );
 
     store.setListSort(ListSort.status);

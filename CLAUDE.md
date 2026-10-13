@@ -46,7 +46,8 @@ web. **`dart:io` n'apparaît que dans `vault_repository.dart` et
 
 Propriétés d'une demande : `ardoise: demande`, `numero`, `titre`, `type`
 (bug, fonctionnalité, idée), `statut` (à faire, en cours, en revue, fait),
-`demandeur`, `intervenant`, `votes` (liens `[[Personne]]`), `cree`.
+`demandeur`, `intervenant` (liens `[[Personne]]`), `cree`. Les votes ont été
+retirés le 13/10 : une ancienne propriété `votes` disparaît à la réécriture.
 
 Règles de la synchronisation — chacune protège des notes réelles :
 
@@ -95,9 +96,21 @@ Linux il faut `clang cmake ninja-build pkg-config libgtk-3-dev`.
 ## Règles
 
 - **Aucune couleur, rayon, ombre ou taille littérale hors `lib/theme/tokens.dart`.**
+- **Thèmes.** Les couleurs vivent dans des `ArdoisePalette` (Argile, Ardoise,
+  Menthe, Lavande) ; `T.ink`, `T.bg`… et `TextStyles.*` sont des **getters**
+  sur la palette active. Donc : **jamais de `const` autour d'une expression
+  qui lit une couleur ou un style**, et jamais de couleur en valeur par défaut
+  d'un paramètre (rendre le champ nullable et résoudre dans `build`, comme
+  `InkOutline.borderColor`). Un `CustomPainter` reçoit sa couleur en
+  paramètre, il ne la lit pas dans `paint`. Le changement de thème remonte
+  `BoardPage` (clé = id de palette). Le choix est retenu dans les
+  préférences (`ardoise.theme`), pas dans le vault. Les couleurs de
+  personnes et de projets ne sont pas thémées : ce sont des données.
+- **Contour des barres** (navigation, segment, puces de type) :
+  `T.softOutline` / `T.softOutlineWidth`, plus épais et plus doux que l'encre
+  des cartes.
 - Interface **en français**, libellés d'accessibilité compris.
 - Pas de nouvelle dépendance sans accord.
-- Un vote par personne et par demande : `votes == voterIds.length`.
 - **Le numéro d'une demande n'est unique qu'à l'intérieur d'un projet.** Toute
   lecture et toute écriture se font sur le couple (projet courant, numéro).
   L'oublier a déjà provoqué des modifications croisées entre projets.

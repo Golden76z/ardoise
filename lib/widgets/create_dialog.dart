@@ -30,6 +30,7 @@ class _CreateDialog extends StatefulWidget {
 
 class _CreateDialogState extends State<_CreateDialog> {
   final _title = TextEditingController();
+  final _description = TextEditingController();
   RequestType _type = RequestType.feature;
 
   /// L'intervenant proposé par défaut est l'utilisateur courant (prototype).
@@ -45,6 +46,7 @@ class _CreateDialogState extends State<_CreateDialog> {
   @override
   void dispose() {
     _title.dispose();
+    _description.dispose();
     super.dispose();
   }
 
@@ -56,6 +58,7 @@ class _CreateDialogState extends State<_CreateDialog> {
       title: _title.text,
       type: _type,
       assigneeId: _assigneeId,
+      description: _description.text,
     );
     Navigator.of(context).pop();
   }
@@ -82,7 +85,7 @@ class _CreateDialogState extends State<_CreateDialog> {
                 children: [
                   Text('Nouvelle demande', style: TextStyles.panelTitle),
                   const SizedBox(height: 16),
-                  const Text('Titre', style: TextStyles.label),
+                  Text('Titre', style: TextStyles.label),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _title,
@@ -99,21 +102,21 @@ class _CreateDialogState extends State<_CreateDialog> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: T.ink,
                           width: T.borderWidth,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: T.ink,
                           width: T.borderWidth,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: T.accent,
                           width: T.borderWidth,
                         ),
@@ -121,7 +124,22 @@ class _CreateDialogState extends State<_CreateDialog> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Type', style: TextStyles.label),
+                  Text('Description', style: TextStyles.label),
+                  const SizedBox(height: 8),
+                  // Facultative. Entrée passe à la ligne : on crée avec le
+                  // bouton, ou Entrée dans le titre.
+                  TextField(
+                    controller: _description,
+                    minLines: 2,
+                    maxLines: 6,
+                    keyboardType: TextInputType.multiline,
+                    style: TextStyles.body,
+                    decoration: inkInputDecoration(
+                      hint: 'Facultatif — contexte, étapes, idée de solution',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Type', style: TextStyles.label),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
@@ -137,7 +155,7 @@ class _CreateDialogState extends State<_CreateDialog> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Intervenant', style: TextStyles.label),
+                  Text('Intervenant', style: TextStyles.label),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,

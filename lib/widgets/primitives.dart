@@ -14,16 +14,20 @@ class DottedBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: T.bg,
-    child: CustomPaint(painter: const _DotPainter(), child: child),
+    child: CustomPaint(painter: _DotPainter(T.bgDot), child: child),
   );
 }
 
 class _DotPainter extends CustomPainter {
-  const _DotPainter();
+  const _DotPainter(this.color);
+
+  /// Passée plutôt que lue dans `paint` : sinon un changement de thème ne
+  /// repeindrait pas les points.
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = T.bgDot;
+    final paint = Paint()..color = color;
     for (var y = 0.0; y < size.height; y += T.dotSpacing) {
       for (var x = 0.0; x < size.width; x += T.dotSpacing) {
         canvas.drawCircle(Offset(x, y), T.dotRadius, paint);
@@ -32,7 +36,7 @@ class _DotPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DotPainter old) => false;
+  bool shouldRepaint(_DotPainter old) => old.color != color;
 }
 
 /// « Contour encre + coin arrondi » : la brique de tout le design.
@@ -44,7 +48,7 @@ class InkOutline extends StatelessWidget {
     this.color,
     this.padding,
     this.shadow,
-    this.borderColor = T.ink,
+    this.borderColor,
     this.borderWidth = T.borderWidth,
   });
 
@@ -53,7 +57,9 @@ class InkOutline extends StatelessWidget {
   final Color? color;
   final EdgeInsets? padding;
   final List<BoxShadow>? shadow;
-  final Color borderColor;
+
+  /// `null` : l'encre de la palette active.
+  final Color? borderColor;
   final double borderWidth;
 
   @override
@@ -62,7 +68,7 @@ class InkOutline extends StatelessWidget {
     decoration: BoxDecoration(
       color: color,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(color: borderColor, width: borderWidth),
+      border: Border.all(color: borderColor ?? T.ink, width: borderWidth),
       boxShadow: shadow,
     ),
     child: child,
@@ -242,52 +248,6 @@ class StatusPill extends StatelessWidget {
   );
 }
 
-/// Le bouton de vote `▲ n`. Un seul exemplaire : c'est le seul endroit d'où
-/// part `toggleVote`, et il est partagé par la carte et la ligne de liste.
-class VoteButton extends StatelessWidget {
-  const VoteButton({
-    super.key,
-    required this.onToggle,
-    required this.votes,
-    required this.voted,
-    required this.title,
-  });
-
-  final VoidCallback onToggle;
-  final int votes;
-  final bool voted;
-
-  /// Sert au libellé d'accessibilité : « Voter pour `titre` ».
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: voted,
-    label: voted ? 'Retirer mon vote sur $title' : 'Voter pour $title',
-    child: InkWell(
-      onTap: onToggle,
-      borderRadius: BorderRadius.circular(T.rSmallChip),
-      child: InkOutline(
-        radius: T.rSmallChip,
-        color: voted ? T.accentSoft : T.surface,
-        borderColor: voted ? T.ink : T.line,
-        padding: const EdgeInsets.symmetric(horizontal: 9),
-        child: SizedBox(
-          height: 28 - 2 * T.borderWidth,
-          child: Center(
-            widthFactor: 1,
-            child: Text(
-              '▲ $votes',
-              style: TextStyles.bold800.copyWith(color: T.accentInk),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 /// La pastille de comptage des colonnes et des puces.
 class CountBadge extends StatelessWidget {
   const CountBadge(this.count, {super.key});
@@ -311,5 +271,24 @@ class CountBadge extends StatelessWidget {
         color: T.accentInk,
       ),
     ),
+  );
+}
+
+/// Le champ de saisie d'Ardoise : fond de page, contour encre, accent au
+/// focus. Partagé par la création, le détail et le choix du vault.
+InputDecoration inkInputDecoration({String? hint}) {
+  OutlineInputBorder border(Color color) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: BorderSide(color: color, width: T.borderWidth),
+  );
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyles.sub,
+    filled: true,
+    fillColor: T.bg,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    border: border(T.ink),
+    enabledBorder: border(T.ink),
+    focusedBorder: border(T.accent),
   );
 }

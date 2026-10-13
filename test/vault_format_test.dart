@@ -103,7 +103,6 @@ Le corps.
         expect(r.status, original.status);
         expect(r.requesterId, original.requesterId);
         expect(r.assigneeId, original.assigneeId);
-        expect(r.voterIds, original.voterIds);
         expect(r.createdAt, original.createdAt);
       }
     });
@@ -141,6 +140,22 @@ Le corps.
         ['urgent'],
       );
       expect(again['Ardoise/ECH/ECH.md'], contains('Mes notes.'));
+    });
+
+    test('l’ancienne propriété votes disparaît à la réécriture', () {
+      final first = renderVault(_seed());
+      final old = {
+        ...first,
+        'Ardoise/ECH/ECH-48.md': first['Ardoise/ECH/ECH-48.md']!.replaceFirst(
+          'ardoise: demande',
+          'ardoise: demande\nvotes:\n  - "[[Tom]]"',
+        ),
+      };
+      final again = renderVault(_seed(), existing: old);
+      expect(
+        parseNote(again['Ardoise/ECH/ECH-48.md']!).properties,
+        isNot(contains('votes')),
+      );
     });
 
     test('une modification faite dans Obsidian est lue', () {
