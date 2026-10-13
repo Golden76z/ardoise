@@ -57,8 +57,9 @@ void main() {
     tester,
   ) async {
     await _pumpAt(tester, 412);
-    // « Votes » est inerte : au téléphone elle coûterait de la largeur pour rien.
-    expect(find.text('Votes'), findsNothing);
+    // Le choix du thème est réservé au bureau : la rangée unique n'a pas la
+    // place.
+    expect(find.byTooltip('Thème de couleurs'), findsNothing);
     // Le bouton de création perd son libellé mais garde son nom accessible.
     expect(find.text('+ Demande'), findsNothing);
     expect(find.bySemanticsLabel(RegExp('Nouvelle demande')), findsOneWidget);
@@ -75,7 +76,7 @@ void main() {
     expect(find.byType(MonthPicker), findsOneWidget, reason: 'dans l’en-tête');
     // Les éléments de la nav tiennent sur une seule ligne.
     final navItems = <Finder>[
-      find.descendant(of: find.byType(NavPill), matching: find.text('Échéo ▾')),
+      find.descendant(of: find.byType(NavPill), matching: find.text('Écho ▾')),
       find.descendant(of: find.byType(NavPill), matching: find.text('Tableau')),
       find.descendant(of: find.byType(NavPill), matching: find.text('Liste')),
     ];
@@ -123,17 +124,17 @@ void main() {
 
   testWidgets('au bureau, la navigation garde tout', (tester) async {
     await _pumpAt(tester, 1440);
-    expect(find.text('Votes'), findsOneWidget);
+    expect(find.byTooltip('Thème de couleurs'), findsOneWidget);
     expect(find.text('+ Demande'), findsOneWidget);
     expect(find.text('Colonnes'), findsOneWidget);
   });
 
   testWidgets('le titre du projet rétrécit au téléphone', (tester) async {
     await _pumpAt(tester, 1440);
-    final large = tester.widget<Text>(find.text('Échéo')).style!.fontSize;
+    final large = tester.widget<Text>(find.text('Écho')).style!.fontSize;
 
     await _pumpAt(tester, 412);
-    final etroit = tester.widget<Text>(find.text('Échéo')).style!.fontSize;
+    final etroit = tester.widget<Text>(find.text('Écho')).style!.fontSize;
 
     expect(etroit, lessThan(large!));
     expect(etroit, 32);

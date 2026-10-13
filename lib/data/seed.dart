@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../theme/tokens.dart';
 
 /// Le premier projet de la liste est celui sur lequel l'app s'ouvre.
 /// Un second projet d'exemple donne du sens au sélecteur dès le départ.
@@ -6,7 +7,7 @@ const seedProjects = <Project>[
   Project(
     id: 'echeo',
     key: 'ECH',
-    name: 'Échéo',
+    name: 'Écho',
     milestoneName: 'v0.4',
     color: Color(0xFFDDF3EF),
   ),
@@ -19,11 +20,11 @@ const seedProjects = <Project>[
   ),
 ];
 
-/// Utilisateur courant du prototype : Damien.
+/// Utilisateur courant des données d'exemple.
 const seedCurrentUserId = 'D';
 
 const seedPeople = <Person>[
-  Person(id: 'D', name: 'Damien', color: Color(0xFFEFC4A6)),
+  Person(id: 'D', name: 'Dana', color: Color(0xFFEFC4A6)),
   Person(id: 'T', name: 'Tom', color: Color(0xFFCBE4B6)),
   Person(id: 'I', name: 'Inès', color: Color(0xFFF6E19A)),
   Person(id: 'L', name: 'Léa', color: Color(0xFFF8C2BC)),
@@ -42,7 +43,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 7),
-    voterIds: const {'K', 'T'},
   ),
   Request(
     number: 51,
@@ -54,7 +54,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: 'T',
     createdAt: DateTime(2026, 10, 2),
-    voterIds: const {'L', 'I', 'T'},
   ),
   Request(
     number: 53,
@@ -67,7 +66,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: null,
     createdAt: DateTime(2026, 10, 6),
-    voterIds: const {'D'},
   ),
   Request(
     number: 42,
@@ -79,7 +77,6 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 1),
-    voterIds: const {'L', 'K', 'I'},
   ),
   Request(
     number: 47,
@@ -91,7 +88,6 @@ List<Request> get seedRequests => [
     requesterId: 'D',
     assigneeId: 'I',
     createdAt: DateTime(2026, 10, 5),
-    voterIds: const {},
   ),
   Request(
     number: 39,
@@ -104,7 +100,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'T',
     createdAt: DateTime(2026, 10, 3),
-    voterIds: const {'K', 'T'},
   ),
   Request(
     number: 35,
@@ -116,7 +111,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: 'I',
     createdAt: DateTime(2026, 10, 1),
-    voterIds: const {'L', 'K', 'T'},
   ),
   Request(
     number: 40,
@@ -128,7 +122,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 4),
-    voterIds: const {'I'},
   ),
   Request(
     number: 30,
@@ -141,7 +134,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'I',
     createdAt: DateTime(2026, 9, 12),
-    voterIds: const {'K', 'T', 'D'},
   ),
   Request(
     number: 31,
@@ -153,7 +145,6 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 9, 18),
-    voterIds: const {'L', 'I'},
   ),
   Request(
     number: 33,
@@ -165,7 +156,6 @@ List<Request> get seedRequests => [
     requesterId: 'I',
     assigneeId: null,
     createdAt: DateTime(2026, 9, 25),
-    voterIds: const {'L', 'K'},
   ),
   Request(
     number: 56,
@@ -177,7 +167,6 @@ List<Request> get seedRequests => [
     requesterId: 'K',
     assigneeId: null,
     createdAt: DateTime(2026, 11, 2),
-    voterIds: const {'L'},
   ),
   Request(
     number: 57,
@@ -189,7 +178,6 @@ List<Request> get seedRequests => [
     requesterId: 'L',
     assigneeId: 'T',
     createdAt: DateTime(2026, 11, 4),
-    voterIds: const {},
   ),
   // — Second projet : la numérotation repart à 1. —
   Request(
@@ -202,7 +190,6 @@ List<Request> get seedRequests => [
     requesterId: 'D',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 3),
-    voterIds: const {'T'},
   ),
   Request(
     number: 2,
@@ -214,6 +201,23 @@ List<Request> get seedRequests => [
     requesterId: 'T',
     assigneeId: 'D',
     createdAt: DateTime(2026, 10, 6),
-    voterIds: const {},
   ),
 ];
+
+/// Point de départ d'un vault vide : un projet et une personne, tous deux à
+/// renommer. Pas de données d'exemple — elles atterriraient dans les notes de
+/// l'utilisateur.
+ArdoiseSnapshot vaultStarterSnapshot() => ArdoiseSnapshot(
+  projects: [
+    Project(
+      id: 'projet',
+      key: 'PRJ',
+      name: 'Mon projet',
+      milestoneName: '',
+      color: T.projectPalette[2],
+    ),
+  ],
+  requests: const [],
+  people: [Person(id: 'moi', name: 'Moi', color: T.personPalette.first)],
+  currentUserId: 'moi',
+);

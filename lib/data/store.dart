@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
@@ -110,6 +112,8 @@ class ArdoiseStore extends ChangeNotifier {
         // Des données existent peut-être : le dire, sinon la première
         // écriture remplace du vrai travail par des données d'exemple.
         _saveError = 'Lecture des données impossible ($failure).';
+      } else if (_repository.lastLoadWarning != null) {
+        _saveError = _lastWarningShown = _repository.lastLoadWarning;
       }
       _projects = snapshot?.projects ?? seedProjects;
       _requests = snapshot?.requests ?? seedRequests;
@@ -130,6 +134,48 @@ class ArdoiseStore extends ChangeNotifier {
     }
     _loading = false;
     notifyListeners();
+    _externalSubscription ??= _repository.externalChanges.listen(
+      _applyExternal,
+    );
+  }
+
+  StreamSubscription<ArdoiseSnapshot>? _externalSubscription;
+
+  /// Le dépôt a été modifié ailleurs (une note éditée dans Obsidian) : son
+  /// état remplace le nôtre, sans réécriture. Ce qui n'est que de l'affichage
+  /// (projet courant, filtres, recherche) est gardé tant qu'il a un sens.
+  void _applyExternal(ArdoiseSnapshot snapshot) {
+    if (snapshot.projects.isEmpty) return;
+    _projects = snapshot.projects;
+    _requests = snapshot.requests;
+    final people = snapshot.people;
+    if (people != null && people.isNotEmpty) _people = people;
+    final me = snapshot.currentUserId;
+    if (me != null && _people.any((p) => p.id == me)) _currentUserId = me;
+    if (!_people.any((p) => p.id == _currentUserId)) {
+      _currentUserId = _people.first.id;
+    }
+    if (!_projects.any((p) => p.id == _currentProjectId)) {
+      _currentProjectId = _projects.first.id;
+      _searchQuery = '';
+    }
+    _hiddenPersonIds.removeWhere((id) => !_people.any((p) => p.id == id));
+    final warning = _repository.lastLoadWarning;
+    if (warning != null) {
+      _saveError = warning;
+    } else if (_saveError == _lastWarningShown) {
+      _saveError = null;
+    }
+    _lastWarningShown = warning;
+    notifyListeners();
+  }
+
+  String? _lastWarningShown;
+
+  @override
+  void dispose() {
+    _externalSubscription?.cancel();
+    super.dispose();
   }
 
   // — Lecture —
@@ -253,9 +299,21 @@ class ArdoiseStore extends ChangeNotifier {
 
     found.sort(switch (_listSort) {
       ListSort.recent => (a, b) => b.createdAt.compareTo(a.createdAt),
-      ListSort.votes => (a, b) => b.votes.compareTo(a.votes),
       // L'ordre de l'enum est l'ordre du flux de travail : à faire → fait.
       ListSort.status => (a, b) => a.status.index.compareTo(b.status.index),
+      // Urgente d'abord.
+      ListSort.priority => (a, b) => b.priority.index.compareTo(
+        a.priority.index,
+      ),
+      // La plus proche d'abord ; sans échéance, à la fin.
+      ListSort.due => (a, b) {
+        final da = a.dueDate;
+        final db = b.dueDate;
+        if (da == null || db == null) {
+          return (da == null ? 1 : 0) - (db == null ? 1 : 0);
+        }
+        return da.compareTo(db);
+      },
     });
     return found;
   }
@@ -358,11 +416,30 @@ class ArdoiseStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleVote(int number) => _mutate(number, (request) {
-    final voters = {...request.voterIds};
-    if (!voters.remove(currentUserId)) voters.add(currentUserId);
-    return request.copyWith(voterIds: voters);
-  });
+  /// Espaces de bord retirés : la description est aussi le corps de la note
+  /// Obsidian, où un blanc final serait du bruit à chaque relecture.
+  void setDescription(int number, String description) {
+    final clean = description.trim();
+    if (requestByNumber(number)?.description == clean) return;
+    _mutate(number, (request) => request.copyWith(description: clean));
+  }
+
+  /// Aujourd'hui, selon l'horloge du store (figée dans les tests).
+  DateTime get today => _now();
+
+  /// En retard au jour d'aujourd'hui : l'UI le lit, elle ne calcule pas.
+  bool isOverdue(Request request) => request.isOverdue(_now());
+
+  void setPriority(int number, RequestPriority priority) =>
+      _mutate(number, (request) => request.copyWith(priority: priority));
+
+  /// `null` retire l'échéance. L'heure est ignorée : une échéance est un jour.
+  void setDueDate(int number, DateTime? date) => _mutate(
+    number,
+    (request) => date == null
+        ? request.copyWith(clearDueDate: true)
+        : request.copyWith(dueDate: DateTime(date.year, date.month, date.day)),
+  );
 
   void setStatus(int number, RequestStatus status) =>
       _mutate(number, (request) => request.copyWith(status: status));
@@ -379,6 +456,9 @@ class ArdoiseStore extends ChangeNotifier {
     required String title,
     required RequestType type,
     String? assigneeId,
+    String description = '',
+    RequestPriority priority = RequestPriority.medium,
+    DateTime? dueDate,
   }) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) return null;
@@ -393,13 +473,16 @@ class ArdoiseStore extends ChangeNotifier {
           1,
       projectId: _currentProjectId,
       title: trimmed,
-      description: '',
+      description: description.trim(),
       type: type,
       status: RequestStatus.todo,
       requesterId: currentUserId,
       assigneeId: assigneeId,
       createdAt: _creationDate(),
-      voterIds: const {},
+      priority: priority,
+      dueDate: dueDate == null
+          ? null
+          : DateTime(dueDate.year, dueDate.month, dueDate.day),
     );
     _requests = [request, ..._requests];
     _persist();
@@ -448,8 +531,7 @@ class ArdoiseStore extends ChangeNotifier {
   }
 
   /// Refusé quand la personne est **demandeuse** : une demande sans demandeur
-  /// n'a pas de sens. Sinon elle est détachée des intervenants et des votes,
-  /// puis supprimée.
+  /// n'a pas de sens. Sinon elle est retirée des intervenants, puis supprimée.
   String? deletePerson(String id) {
     if (!_people.any((p) => p.id == id)) return 'Cette personne n’existe pas.';
     if (id == _currentUserId) {
@@ -470,11 +552,8 @@ class ArdoiseStore extends ChangeNotifier {
 
     _requests = [
       for (final request in _requests)
-        if (request.assigneeId == id || request.voterIds.contains(id))
-          request.copyWith(
-            clearAssignee: request.assigneeId == id,
-            voterIds: {...request.voterIds}..remove(id),
-          )
+        if (request.assigneeId == id)
+          request.copyWith(clearAssignee: true)
         else
           request,
     ];

@@ -45,7 +45,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester);
-    expect(find.text('Échéo'), findsOneWidget);
+    expect(find.text('Écho'), findsOneWidget);
     expect(find.text('Octobre 2026'), findsOneWidget);
     for (final s in RequestStatus.values) {
       expect(find.text(s.label), findsWidgets);
@@ -60,7 +60,7 @@ void main() {
     await _pump(tester);
     await tester.tap(find.widgetWithText(InkWell, 'Intervenant').first);
     await tester.pumpAndSettle();
-    expect(find.text('Damien'), findsWidgets);
+    expect(find.text('Dana'), findsWidgets);
     expect(find.text('Non assigné'), findsWidgets);
     // La barre des personnes apparaît en mode personne.
     expect(find.text('Intervenants affichés'), findsOneWidget);
@@ -118,16 +118,25 @@ void main() {
     expect(store.requestByNumber(48)!.assigneeId, isNull);
   });
 
-  testWidgets('voter depuis la carte bascule le vote', (tester) async {
+  testWidgets('la description se modifie depuis le détail', (tester) async {
     final store = await _pump(tester);
-    final before = store.requestByNumber(48)!.votes;
-    await tester.tap(
-      find.bySemanticsLabel(
-        RegExp('Voter pour Crash à l’import depuis la galerie'),
-      ),
-    );
+    await tester.tap(find.text('Crash à l’import depuis la galerie'));
     await tester.pumpAndSettle();
-    expect(store.requestByNumber(48)!.votes, before + 1);
+    await tester.tap(find.text('Modifier la description'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Description'),
+      '  Seulement les HEIC.  ',
+    );
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(store.requestByNumber(48)!.description, 'Seulement les HEIC.');
+    expect(find.text('Seulement les HEIC.'), findsOneWidget);
+  });
+
+  testWidgets('aucune trace de vote sur les cartes', (tester) async {
+    await _pump(tester);
+    expect(find.textContaining('▲'), findsNothing);
   });
 
   testWidgets(
@@ -146,7 +155,9 @@ void main() {
         reason: 'titre vide : rien ne se passe',
       );
 
-      await tester.enterText(find.byType(TextField), 'Export en CSV');
+      // Le titre est le premier champ ; viennent ensuite la description et
+      // l'échéance.
+      await tester.enterText(find.byType(TextField).first, 'Export en CSV');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer la demande'));
       await tester.pumpAndSettle();

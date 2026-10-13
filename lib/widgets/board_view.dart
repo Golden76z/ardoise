@@ -25,7 +25,7 @@ class BoardView extends StatelessWidget {
     // `store.columns` recalcule tout à chaque accès : une seule lecture.
     final columns = store.columns;
     if (columns.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
         child: Center(
           child: Text(
@@ -133,7 +133,7 @@ class _Column extends StatelessWidget {
             DashedBorder(
               radius: 16,
               color: T.line,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
                 child: Center(
                   child: Text(

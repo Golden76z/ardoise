@@ -43,7 +43,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
     expect(find.text('Atelier'), findsOneWidget);
     expect(find.text('13'), findsWidgets);
@@ -52,7 +52,7 @@ void main() {
 
   testWidgets('choisir un projet recharge le tableau', (tester) async {
     final store = await _pump(tester);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Atelier'));
     await tester.pumpAndSettle();
@@ -65,7 +65,7 @@ void main() {
     tester,
   ) async {
     final store = await _pump(tester);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Nouveau projet'));
     await tester.pumpAndSettle();
@@ -90,7 +90,7 @@ void main() {
     tester,
   ) async {
     final store = await _pump(tester);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Nouveau projet'));
     await tester.pumpAndSettle();
@@ -107,7 +107,7 @@ void main() {
     tester,
   ) async {
     final store = await _pump(tester);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Supprimer le projet Atelier'));
     await tester.pumpAndSettle();
@@ -121,9 +121,9 @@ void main() {
     tester,
   ) async {
     final store = await _pump(tester, projects: [seedProjects.first]);
-    await tester.tap(_chip('Échéo'));
+    await tester.tap(_chip('Écho'));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Supprimer le projet Échéo'));
+    await tester.tap(find.bySemanticsLabel('Supprimer le projet Écho'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Supprimer'));
     await tester.pumpAndSettle();

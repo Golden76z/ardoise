@@ -1,66 +1,29 @@
 # Ardoise
 
-Un suivi de demandes léger, pour plusieurs projets à la fois. Ce qu'on a sur
-l'ardoise : les bugs, les fonctionnalités et les idées, qui les demande et qui
-s'en occupe.
+Un tableau de suivi — bugs, fonctionnalités, idées — dont chaque carte est une
+note de ton vault Obsidian. Appli de bureau, Linux et Windows, sans serveur.
 
-Flutter — web et Android. **Aucun serveur** : tout est enregistré localement.
+![Ardoise](docs/capture.png)
 
-![Capture du tableau](docs/prototype.html)
+- Tableau par statut, intervenant ou demandeur, glisser-déposer
+- Plusieurs projets, priorités, échéances, descriptions
+- Modifiable dans l'app **et** dans Obsidian : les deux restent synchronisés
+- Quatre thèmes de couleurs
 
-## Ce que ça fait
+## Essayer
 
-- **Tableau** groupable au choix par **statut**, **intervenant** ou
-  **demandeur**, avec glisser-déposer des cartes entre colonnes.
-- **Vue Liste** tous mois confondus, avec recherche plein texte et tri par
-  date, votes ou statut — pour retrouver une demande ancienne que le tableau,
-  filtré par mois, ne montre plus.
-- **Plusieurs projets**, chacun avec sa clé (`ECH-42`), sa couleur et sa
-  numérotation propre.
-- **Filtres** par type et par mois, **votes** (un par personne et par demande),
-  panneau de détail pour changer le statut et réassigner.
-
-## Démarrer
+Il faut [Flutter](https://docs.flutter.dev/get-started/install) et, sous
+Linux, `clang cmake ninja-build pkg-config libgtk-3-dev`.
 
 ```bash
-flutter pub get
-flutter run -d chrome
+git clone https://github.com/Golden76z/ardoise && cd ardoise
+cp -r exemple/vault-demo ~/ardoise-demo
+ARDOISE_VAULT=~/ardoise-demo flutter run -d linux   # ou -d windows
 ```
 
-```bash
-flutter test      # 101 tests
-flutter analyze
-```
-
-## Comment c'est fait
-
-Trois couches, et la frontière entre elles n'est pas négociable.
-
-| Dossier | Rôle |
-|---|---|
-| `lib/models/` | Domaine pur. Aucun import Flutter hors `Color`. |
-| `lib/data/` | Un unique `ArdoiseStore` (`ChangeNotifier`) derrière l'interface `ArdoiseRepository`. |
-| `lib/widgets/` | Ne fait que lire le store et le notifier. Aucun filtrage ni tri ici. |
-
-La persistance est un document JSON dans les préférences locales — identique
-sur web et mobile, contrairement à SQLite qui réclame un worker wasm sur le
-web. Le jour où une API arrive, on écrit une autre implémentation de
-`ArdoiseRepository` et rien d'autre ne bouge.
-
-Le design vient de `docs/prototype.html`, qui reste la référence visuelle et
-comportementale, et de `docs/design-tokens.json`, d'où sortent **toutes** les
-couleurs, rayons et ombres.
-
-`CLAUDE.md` consigne les pièges du projet, et `docs/superpowers/plans/` les
-plans d'implémentation.
-
-## Ce qu'il ne fait pas encore
-
-Pas de comptes ni d'authentification, pas de partage entre appareils (chaque
-navigateur a ses propres données), pas de vue Votes, pas de commentaires ni de
-pièces jointes. Tout cela attend une API ; le modèle de données la prévoit
-déjà.
+Sans `ARDOISE_VAULT`, l'app demande le dossier de ton vault au premier
+lancement. Elle n'écrit que dans son dossier `Ardoise/`.
 
 ## Licence
 
-MIT.
+MIT

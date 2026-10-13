@@ -95,12 +95,12 @@ void main() {
     final store = await _pump(tester);
     await tester.tap(find.text('Liste'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Plus votées'));
+    await tester.tap(find.text('Par statut'));
     await tester.pumpAndSettle();
-    expect(store.listSort, ListSort.votes);
+    expect(store.listSort, ListSort.status);
     expect(
-      store.listRequests.first.votes,
-      greaterThanOrEqualTo(store.listRequests.last.votes),
+      store.listRequests.first.status.index,
+      lessThanOrEqualTo(store.listRequests.last.status.index),
     );
   });
 

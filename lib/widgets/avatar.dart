@@ -29,7 +29,7 @@ class PersonAvatar extends StatelessWidget {
           color: person?.color ?? T.unassigned,
           shape: dashed
               ? const CircleBorder()
-              : const CircleBorder(
+              : CircleBorder(
                   side: BorderSide(color: T.ink, width: T.borderWidth),
                 ),
         ),

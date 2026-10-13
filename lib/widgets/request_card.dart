@@ -90,22 +90,10 @@ class RequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${request.reference(store.project.key)} · '
-                  '${formatShortDate(request.createdAt)}',
-                  style: TextStyles.meta,
-                ),
-              ),
-              VoteButton(
-                onToggle: () => store.toggleVote(request.number),
-                votes: request.votes,
-                voted: request.votedBy(store.currentUserId),
-                title: request.title,
-              ),
-            ],
+          Text(
+            '${request.reference(store.project.key)} · '
+            '${formatShortDate(request.createdAt)}',
+            style: TextStyles.meta,
           ),
           const SizedBox(height: T.cardGap),
           Semantics(
@@ -124,6 +112,9 @@ class RequestCard extends StatelessWidget {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              PriorityPill(priority: request.priority),
+              if (request.dueDate case final due?)
+                DueDatePill(date: due, overdue: store.isOverdue(request)),
               _RequesterPill(person: requester),
               if (showStatus) StatusPill(status: request.status),
               if (showAssignee)
@@ -132,7 +123,7 @@ class RequestCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('→ ', style: TextStyles.meta),
+                      Text('→ ', style: TextStyles.meta),
                       PersonAvatar(person: assignee, size: 28, dashed: true),
                     ],
                   ),

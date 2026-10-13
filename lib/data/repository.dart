@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,7 +22,16 @@ abstract class ArdoiseRepository {
   /// simplement rien d'enregistré. `ArdoiseStore.init` le remonte à l'écran.
   String? get lastLoadError;
 
+  /// Lecture réussie, mais une partie a été laissée de côté (une note
+  /// Obsidian illisible, par exemple). Le store l'affiche sans s'alarmer.
+  String? get lastLoadWarning;
+
   Future<void> save(ArdoiseSnapshot snapshot);
+
+  /// L'état complet, chaque fois qu'il change hors de l'app (édition dans
+  /// Obsidian, `git pull` du vault). Vide pour les dépôts que personne
+  /// d'autre n'écrit.
+  Stream<ArdoiseSnapshot> get externalChanges;
 }
 
 /// Un document JSON dans les préférences. Suffisant pour la V2 (mono-
@@ -32,6 +42,12 @@ abstract class ArdoiseRepository {
 class PrefsRepository implements ArdoiseRepository {
   @override
   String? lastLoadError;
+
+  @override
+  String? get lastLoadWarning => null;
+
+  @override
+  Stream<ArdoiseSnapshot> get externalChanges => const Stream.empty();
 
   // Le projet s'est appelé Chantier jusqu'au 08/10/2026. La clé garde ce
   // nom : elle porte les données déjà enregistrées, et la renommer
@@ -102,7 +118,21 @@ class MemoryRepository implements ArdoiseRepository {
   @override
   String? lastLoadError;
 
+  @override
+  String? lastLoadWarning;
+
   ArdoiseSnapshot? stored;
+
+  final _external = StreamController<ArdoiseSnapshot>.broadcast();
+
+  @override
+  Stream<ArdoiseSnapshot> get externalChanges => _external.stream;
+
+  /// Simule une modification faite ailleurs (Obsidian, `git pull`).
+  void changeExternally(ArdoiseSnapshot snapshot) {
+    stored = snapshot;
+    _external.add(snapshot);
+  }
 
   /// Si non nul, `save` lève — pour tester le bandeau d'erreur.
   Object? failWith;

@@ -109,9 +109,9 @@ void main() {
     final store = await _store();
     expect(store.createPerson(name: ''), isNotNull);
     expect(store.createPerson(name: '   '), isNotNull);
-    expect(store.createPerson(name: 'Damien'), isNotNull);
+    expect(store.createPerson(name: 'Dana'), isNotNull);
     expect(
-      store.createPerson(name: 'damien'),
+      store.createPerson(name: 'dana'),
       isNotNull,
       reason: 'la casse ne doit pas créer un doublon déguisé',
     );
@@ -126,7 +126,7 @@ void main() {
   test('renommer : même garde-fous, et les demandes suivent', () async {
     final store = await _store();
     expect(store.renamePerson('T', ''), isNotNull);
-    expect(store.renamePerson('T', 'Damien'), isNotNull, reason: 'doublon');
+    expect(store.renamePerson('T', 'Dana'), isNotNull, reason: 'doublon');
     expect(store.renamePerson('inconnu', 'X'), isNotNull);
 
     expect(store.renamePerson('T', 'Thomas'), isNull);
@@ -151,7 +151,7 @@ void main() {
   });
 
   test(
-    'supprimer : détache l’intervenant et les votes, puis supprime',
+    'supprimer : détache l’intervenant, puis supprime',
     () async {
       final store = await _store();
       // On crée quelqu'un qui n'a demandé aucune demande, puis on l'implique.
@@ -163,11 +163,6 @@ void main() {
       expect(store.deletePerson(zoe), isNull);
       expect(store.people.map((p) => p.id), isNot(contains(zoe)));
       expect(store.requestByNumber(48)!.assigneeId, isNull, reason: 'détaché');
-      expect(
-        store.visibleRequests.every((r) => !r.voterIds.contains(zoe)),
-        isTrue,
-        reason: 'retiré des votes',
-      );
     },
   );
 
@@ -226,7 +221,7 @@ void main() {
     expect(repo.stored!.people, hasLength(1));
 
     // Tout est renommable : rien n'est figé, et la numérotation repart à 1.
-    expect(store.renamePerson(store.people.first.id, 'Damien'), isNull);
+    expect(store.renamePerson(store.people.first.id, 'Dana'), isNull);
     expect(
       store.createRequest(title: 'Première', type: RequestType.idea)!.number,
       1,
@@ -257,7 +252,7 @@ void main() {
       final store = await _store();
       store.setGrouping(BoardGrouping.assignee);
       expect(store.columns.map((c) => c.title), [
-        'Damien',
+        'Dana',
         'Tom',
         'Inès',
         'Léa',
@@ -279,7 +274,7 @@ void main() {
     final store = await _store();
     store.setGrouping(BoardGrouping.requester);
     expect(store.columns.map((c) => c.title), [
-      'Damien',
+      'Dana',
       'Tom',
       'Inès',
       'Léa',
@@ -296,10 +291,10 @@ void main() {
       final before = store.visibleRequests.length;
       store.togglePerson('D');
       expect(store.isPersonShown('D'), isFalse);
-      expect(store.columns.map((c) => c.title), isNot(contains('Damien')));
+      expect(store.columns.map((c) => c.title), isNot(contains('Dana')));
       expect(store.visibleRequests, hasLength(before));
       store.togglePerson('D');
-      expect(store.columns.map((c) => c.title), contains('Damien'));
+      expect(store.columns.map((c) => c.title), contains('Dana'));
     },
   );
 
@@ -368,18 +363,29 @@ void main() {
     expect(december.visibleMonth, DateTime(2026, 12));
   });
 
-  test('vote : bascule, et le compte suit', () async {
+  test('description : modifiée, nettoyée, et rien si elle ne change pas',
+      () async {
+    final repo = MemoryRepository(_snapshot());
+    final store = await _store(repo: repo);
+    var notified = 0;
+    store.addListener(() => notified++);
+
+    store.setDescription(48, '  Seulement les HEIC.\n');
+    expect(store.requestByNumber(48)!.description, 'Seulement les HEIC.');
+    expect(notified, 1);
+
+    store.setDescription(48, 'Seulement les HEIC.');
+    expect(notified, 1, reason: 'aucune écriture pour rien');
+  });
+
+  test('création : la description est gardée', () async {
     final store = await _store();
-    final before = store.requestByNumber(48)!.votes;
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isFalse);
-
-    store.toggleVote(48);
-    expect(store.requestByNumber(48)!.votes, before + 1);
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isTrue);
-
-    store.toggleVote(48);
-    expect(store.requestByNumber(48)!.votes, before);
-    expect(store.requestByNumber(48)!.votedBy(store.currentUserId), isFalse);
+    final created = store.createRequest(
+      title: 'Export',
+      type: RequestType.feature,
+      description: ' En CSV. ',
+    )!;
+    expect(created.description, 'En CSV.');
   });
 
   test('changer le statut déplace la carte de colonne', () async {
@@ -415,7 +421,6 @@ void main() {
       expect(created.status, RequestStatus.todo);
       expect(created.requesterId, store.currentUserId);
       expect(created.assigneeId, 'T');
-      expect(created.voterIds, isEmpty);
       expect(store.columns.first.requests.first.number, 58);
     },
   );
@@ -462,13 +467,13 @@ void main() {
     final repo = MemoryRepository(_snapshot())..failWith = 'disque plein';
     final store = await _store(repo: repo);
     expect(store.saveError, isNull);
-    store.toggleVote(48);
+    store.setStatus(48, RequestStatus.done);
     await Future<void>.delayed(Duration.zero);
     expect(store.saveError, isNotNull);
     expect(store.saveError, contains('disque plein'));
 
     repo.failWith = null;
-    store.toggleVote(48);
+    store.setStatus(48, RequestStatus.todo);
     await Future<void>.delayed(Duration.zero);
     expect(store.saveError, isNull);
   });
@@ -482,7 +487,7 @@ void main() {
       ..toggleType(RequestType.bug)
       ..togglePerson('D')
       ..shiftMonth(1)
-      ..toggleVote(56)
+      ..setDescription(56, 'Nouvelle description')
       ..setStatus(56, RequestStatus.doing)
       ..setAssignee(56, 'L');
     expect(notified, greaterThanOrEqualTo(7));
@@ -497,7 +502,7 @@ void main() {
 
   test('personById : identifiant inconnu ou nul → null', () async {
     final store = await _store();
-    expect(store.personById('D')?.name, 'Damien');
+    expect(store.personById('D')?.name, 'Dana');
     expect(store.personById(null), isNull);
     expect(store.personById('ZZ'), isNull);
   });
@@ -650,7 +655,7 @@ void main() {
       // On agit sur la n°1 d’Atelier : celle de Maison ne doit pas bouger.
       store.setCurrentProject('atelier');
       store.setStatus(1, RequestStatus.done);
-      store.toggleVote(1);
+      store.setDescription(1, 'Chêne massif');
       store.setAssignee(1, 'K');
 
       final atelier = store.requestByNumber(1)!;
@@ -666,7 +671,11 @@ void main() {
         RequestStatus.todo,
         reason: 'écriture croisée entre projets',
       );
-      expect(maison.votes, 0, reason: 'vote croisé entre projets');
+      expect(
+        maison.description,
+        isNot('Chêne massif'),
+        reason: 'description croisée entre projets',
+      );
       expect(
         maison.assigneeId,
         isNull,
@@ -677,10 +686,10 @@ void main() {
 
   test('requestByNumber ne sort jamais du projet courant', () async {
     final store = await _store();
-    expect(store.requestByNumber(1), isNull, reason: 'Échéo n’a pas de n°1');
+    expect(store.requestByNumber(1), isNull, reason: 'Écho n’a pas de n°1');
     store.setCurrentProject('atelier');
     expect(store.requestByNumber(1)!.title, 'Choisir le bois');
-    expect(store.requestByNumber(48), isNull, reason: 'ECH-48 est dans Échéo');
+    expect(store.requestByNumber(48), isNull, reason: 'ECH-48 est dans Écho');
   });
 
   test('un projet inconnu ne devient pas le projet courant', () async {
@@ -705,7 +714,7 @@ void main() {
     final store = await _store();
     expect(store.viewMode, ViewMode.board);
     store.setViewMode(ViewMode.list);
-    // 13 demandes d’Échéo, tous mois : le filtre de mois ne s’applique pas.
+    // 13 demandes d’Écho, tous mois : le filtre de mois ne s’applique pas.
     expect(store.listRequests, hasLength(13));
 
     expect(store.listSort, ListSort.recent);
@@ -713,13 +722,6 @@ void main() {
     expect(
       dates,
       orderedEquals(List.of(dates)..sort((a, b) => b.compareTo(a))),
-    );
-
-    store.setListSort(ListSort.votes);
-    final votes = store.listRequests.map((r) => r.votes).toList();
-    expect(
-      votes,
-      orderedEquals(List.of(votes)..sort((a, b) => b.compareTo(a))),
     );
 
     store.setListSort(ListSort.status);

@@ -25,7 +25,6 @@ void main() {
       loaded!.requests.map((r) => r.number),
       seedRequests.map((r) => r.number),
     );
-    expect(loaded.requests.first.voterIds, seedRequests.first.voterIds);
     expect(
       loaded.requests.firstWhere((r) => r.number == 53).assigneeId,
       isNull,

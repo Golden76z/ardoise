@@ -43,42 +43,47 @@ ThemeData buildArdoiseTheme() {
 bool isPhone(BuildContext context) =>
     MediaQuery.sizeOf(context).width < T.phoneBreakpoint;
 
-/// Styles de texte récurrents, pour ne pas répéter `fontWeight: w800` partout.
-abstract final class TextStyles {
-  static const bold800 = TextStyle(fontWeight: FontWeight.w800, color: T.ink);
+/// Vrai quand le titre du projet tient à gauche de la barre de navigation.
+bool titleBesideNav(BuildContext context) =>
+    MediaQuery.sizeOf(context).width >= T.titleBesideNavMinWidth;
 
-  static const pageTitle = TextStyle(
+/// Styles de texte récurrents, pour ne pas répéter `fontWeight: w800` partout.
+/// Ce sont des getters : ils lisent la palette active (voir `T.palette`).
+abstract final class TextStyles {
+  static TextStyle get bold800 => TextStyle(fontWeight: FontWeight.w800, color: T.ink);
+
+  static TextStyle get pageTitle => TextStyle(
     fontWeight: FontWeight.w800,
     fontSize: T.fsPageTitle,
     height: 1,
     color: T.ink,
   );
-  static const panelTitle = TextStyle(
+  static TextStyle get panelTitle => TextStyle(
     fontWeight: FontWeight.w800,
     fontSize: T.fsPanelTitle,
     height: 1.15,
     color: T.ink,
   );
-  static const columnTitle = TextStyle(
+  static TextStyle get columnTitle => TextStyle(
     fontWeight: FontWeight.w800,
     fontSize: T.fsColumnTitle,
     color: T.ink,
   );
-  static const cardTitle = TextStyle(
+  static TextStyle get cardTitle => TextStyle(
     fontWeight: FontWeight.w800,
     fontSize: T.fsCardTitle,
     height: 1.25,
     color: T.ink,
   );
-  static const body = TextStyle(fontSize: T.fsBody, color: T.ink);
-  static const description = TextStyle(
+  static TextStyle get body => TextStyle(fontSize: T.fsBody, color: T.ink);
+  static TextStyle get description => TextStyle(
     fontSize: T.fsBody,
     height: 1.5,
     color: T.description,
   );
-  static const sub = TextStyle(fontSize: T.fsSmall, color: T.muted);
-  static const meta = TextStyle(fontSize: T.fsMeta, color: T.muted);
-  static const label = TextStyle(
+  static TextStyle get sub => TextStyle(fontSize: T.fsSmall, color: T.muted);
+  static TextStyle get meta => TextStyle(fontSize: T.fsMeta, color: T.muted);
+  static TextStyle get label => TextStyle(
     fontSize: T.fsMeta,
     fontWeight: FontWeight.w800,
     color: T.muted,

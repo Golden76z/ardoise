@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'primitives.dart';
 import 'project_menu.dart';
+import 'theme_picker.dart';
 
 /// La barre de navigation en pilule flottante : logo, projet, onglets,
 /// sélecteur de mois, bouton de création.
@@ -21,7 +22,7 @@ class NavPill extends StatelessWidget {
     final logo = Container(
       width: 42,
       height: 42,
-      decoration: const BoxDecoration(color: T.accent, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: T.accent, shape: BoxShape.circle),
       alignment: Alignment.center,
       child: Text(
         'A',
@@ -46,10 +47,12 @@ class NavPill extends StatelessWidget {
       radius: T.rNav,
       color: T.surface,
       shadow: T.navShadow,
+      borderColor: T.softOutline,
+      borderWidth: T.softOutlineWidth,
       padding: const EdgeInsets.all(7),
       // Sur téléphone, deux rangées décidées plutôt qu'un `Wrap` subi : à
       // 400 px de large, le repli automatique sortait « Liste » seule à
-      // droite et « Votes » orpheline au-dessus du bouton.
+      // droite et un onglet orphelin au-dessus du bouton.
       // Une seule rangée au téléphone, centrée. Le logo n'y est pas : il
       // est décoratif, et la pilule de projet porte déjà le contexte. La
       // rangée prend toute la largeur — sans ça (`MainAxisSize.min`) le
@@ -85,10 +88,9 @@ class NavPill extends StatelessWidget {
                 logo,
                 ProjectMenu(store: store),
                 ...tabs,
-                // La vue Votes reste inerte : hors périmètre (handoff §4).
-                const _NavChip(label: 'Votes', active: false),
                 ?month,
                 PillButton(label: '+ Demande', onPressed: onCreate),
+                const ThemePicker(),
               ],
             ),
     );
@@ -228,7 +230,7 @@ class _Arrow extends StatelessWidget {
       child: Container(
         width: 32,
         height: 32,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: T.surface,
           shape: BoxShape.circle,
         ),
