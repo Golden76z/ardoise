@@ -111,7 +111,7 @@ void main() {
     expect(store.createPerson(name: '   '), isNotNull);
     expect(store.createPerson(name: 'Dana'), isNotNull);
     expect(
-      store.createPerson(name: 'damien'),
+      store.createPerson(name: 'dana'),
       isNotNull,
       reason: 'la casse ne doit pas créer un doublon déguisé',
     );
