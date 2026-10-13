@@ -270,9 +270,15 @@ class VaultRepository implements ArdoiseRepository {
 abstract final class VaultLocation {
   static const preferenceKey = 'ardoise.vaultPath';
 
+  /// Le chemin imposé par `ARDOISE_VAULT`, s'il y en a un. Il n'est jamais
+  /// retenu : lancer la démo ne doit pas faire oublier son vrai vault.
+  static String? get forced {
+    final value = Platform.environment['ARDOISE_VAULT'];
+    return value == null || value.trim().isEmpty ? null : normalize(value);
+  }
+
   static Future<String?> saved() async {
-    final forced = Platform.environment['ARDOISE_VAULT'];
-    if (forced != null && forced.trim().isNotEmpty) return normalize(forced);
+    if (forced case final path?) return path;
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(preferenceKey);

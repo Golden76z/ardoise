@@ -20,7 +20,7 @@ Future<Widget> buildHome() async {
     initialProblem: problem,
     check: VaultLocation.check,
     open: (path) async {
-      await VaultLocation.remember(path);
+      if (VaultLocation.forced == null) await VaultLocation.remember(path);
       final store = ArdoiseStore(
         repository: VaultRepository(VaultLocation.normalize(path)),
       );
