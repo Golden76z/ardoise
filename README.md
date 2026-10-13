@@ -24,6 +24,13 @@ ARDOISE_VAULT=~/ardoise-demo flutter run -d linux   # ou -d windows
 Sans `ARDOISE_VAULT`, l'app demande le dossier de ton vault au premier
 lancement. Elle n'écrit que dans son dossier `Ardoise/`.
 
+## Installer (Linux)
+
+```bash
+tool/linux/install.sh          # compile et ajoute Ardoise au lanceur d'applications
+tool/linux/install.sh --remove
+```
+
 ## Licence
 
 MIT
