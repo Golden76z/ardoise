@@ -155,7 +155,9 @@ void main() {
         reason: 'titre vide : rien ne se passe',
       );
 
-      await tester.enterText(find.byType(TextField), 'Export en CSV');
+      // Le titre est le premier champ ; viennent ensuite la description et
+      // l'échéance.
+      await tester.enterText(find.byType(TextField).first, 'Export en CSV');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Créer la demande'));
       await tester.pumpAndSettle();
